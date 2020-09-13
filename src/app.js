@@ -13,9 +13,15 @@ var xrfkey = "0123456789abcdef";
 var hasFocus = true;
 var protocol = location.protocol;
 var host = location.hostname;
+var path = location.pathname;
+
+if (host === 'localhost') {
+    host = 'qlik.dfo.no';  // DEBUG
+    path = '/public/content'  // DEBUG
+}
+
 
 //Add support for virtual proxy. Need to not access the hub without the virtual proxy.
-var path = location.pathname;
 var regexpResults = /([\w\d-]*)\/content/i.exec(path);
 if (regexpResults != null) {
     var virtualProxy = regexpResults[1];
