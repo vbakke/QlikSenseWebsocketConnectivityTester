@@ -7,6 +7,7 @@
     "lib": "lib"
   },
   "dependencies": {
+    "browserify": "^16.5.2",
     "chart.js": "^2.7.2",
     "enigma.js": "^2.2.1",
     "moment": "^2.19.3",
@@ -16,7 +17,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify app.js -o ../bundle.js"
   },
   "repository": {
     "type": "git",
