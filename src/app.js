@@ -42,8 +42,8 @@ for (let pair of pairs) {
     ws.on('error', (err) => {
         showError($div, err);
     });
-    ws.on('closed', (err) => {
-        showError($div, err);
+    ws.on('closed', () => {
+        showError($div, 'Websocket has been closed');
     });
 }
 
