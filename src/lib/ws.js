@@ -5,18 +5,19 @@ const ClassEvents = require('./event.js');
 class QlikWSTester extends ClassEvents {
     constructor(url) {
         super();
-        console.log('QWS: Connecting to ', url)
         this.config = this.makeConfig(url);
         this.session = undefined;
         this.qws = undefined;
-
-        // this.open().then( () => {
-        //     this.delayedPing(0);
-        // });    
+        this.fakeTimeout = 0;
         
+        // this.open().then( () => {
+            //     this.ping();
+            // });    
+            
     }
-    
+        
     open () {
+        console.log('QWS: Connecting to ', this.config.url)
         return new Promise((resolve, reject) => {
             console.log('QWS: Opening new websocket');
             this.session = enigma.create(this.config);
@@ -28,54 +29,57 @@ class QlikWSTester extends ClassEvents {
                 this.trigger('closed');
             });
             
-            
-            
             this.session.open().then((qws) => {
                 this.qws = qws;
                 console.log('QWS: Opened');
                 this.trigger('open');
                 resolve();
-            },  (err, a, b, c) => {
+            },  (err) => {
                 this.trigger('error');
                 reject(err);
             });
         });
     }
+
+
     async ping() {
-        return this.delayedPing(0);
+        let startTime = Date.now();
+        try {
+            let productVersion = await this.qws.productVersion();
+        } catch (err) {
+            console.warn('QWS: Ping failed: ', err);
+            this.trigger('error', err);
+            throw err;
+        }
+        let timed = Date.now() - startTime;
+        // console.log('QWS: Ping took: ' + timed + ' ms');
+        return timed;
     }
+
+
     async delayedPing(time) {
         time = time || 0;
         if (! this.session) {
             await this.open();
         }
-
-        return new Promise(async (resolve, reject) => {
-            // Wait
-            await this.sleep(time);
-
-            // For testing purposes, set a fake timeout limit to mimick network drop
-            if (time > 37/4*1000) {
-                if (this.session) this.session.close();
-                this.session = undefined;
-                reject('Fake timeout')
-            } else {
-                // Send ping
-                let startTime = Date.now();
-                this.qws.productVersion().then( (productVersion) => {
-                    let timed = Date.now() - startTime;
-                    console.log('QWS: Ping took: ' + timed + ' ms');
-                    this.trigger('ping', timed);
-                    resolve(true);
-                },  (err) => {
-                    console.warn('QWS: Ping failed: ', err);
-                    reject(err);
-                });
-            }
-        });
+        
+        await QlikWSTester.sleep(time);
+        
+        // For testing purposes, set a fake timeout limit to mimick network drop
+        if (this.fakeTimeout > 0 && time > this.fakeTimeout) {
+            if (this.session) this.session.close();
+            let err =  new Error('Fake timeout');
+            this.trigger('error', err);
+            throw err;
+        } else {
+            // Send ping
+            try catch if err.message === 'Socket closed', include sleep time
+            let timed = await this.ping();
+            return timed;
+        }
     }
 
-    sleep(time) {
+    static sleep(time) {
         return new Promise( (resolve, reject) => {
             setTimeout(resolve, time);
         });
