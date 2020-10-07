@@ -1,51 +1,119 @@
-const enigma = require('enigma.js');
-const schema = require('enigma.js/schemas/12.20.0.json')
+const W3CWebSocket = require('websocket').w3cwebsocket;
 const ClassEvents = require('./event.js');
 
 class QlikWSTester extends ClassEvents {
     constructor(url) {
         super();
         this.config = this.makeConfig(url);
-        this.session = undefined;
-        this.qws = undefined;
+        this.ws = undefined;
+        this.msgCounter = 1;
+        this.msgBuffer = {};
         this.fakeTimeout = 0;
-        
+
         // this.open().then( () => {
-            //     this.ping();
-            // });    
-            
+        //     this.ping();
+        // });    
+
     }
-        
-    open () {
+
+    open() {
         console.log('QWS: Connecting to ', this.config.url)
+        var self = this;
         return new Promise((resolve, reject) => {
             console.log('QWS: Opening new websocket');
-            this.session = enigma.create(this.config);
+            self.ws = new W3CWebSocket(self.config.url);
 
-            this.session.on('resumed', (e) => console.log('QWS: Session resumed at: ' + timeStampStr(new Date())) );
-            this.session.on('closed', (e) => {
-                this.session = undefined;
+            self.ws.onerror = function (e) {
+                console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', e);
+            };
+            self.ws.onmessage = function (msg) {
+                console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
+                self.messageLoop(msg.data)
+            };
+            self.ws.onclose = function (e) {
+                this.ws = undefined;
                 console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
-                this.trigger('closed');
-            });
-            
-            this.session.open().then((qws) => {
-                this.qws = qws;
+                self.trigger('closed');
+            };
+
+            self.ws.onopen = function () {
                 console.log('QWS: Opened');
-                this.trigger('open');
+                self.trigger('open');
                 resolve();
-            },  (err) => {
-                this.trigger('error');
-                reject(err);
-            });
+            };
+
+            // ,  (err) => {
+            //     this.trigger('error');
+            //     reject(err);
+            // });
         });
+    }
+
+    messageLoop(data) {
+        //
+        // WebSocket message event loop 
+        //
+
+
+        let reply = JSON.parse(data);
+        if (reply.method === 'OnAuthenticationInformation') {
+            if (reply.params && reply.params.mustAuthenticate) {
+                ws.close();
+                resolve(false);  // 502 - Cannot connecto to 
+            }
+        } else if (reply.method === 'OnNoEngineAvailable') {
+            // OnMaxParallelSessionsExceeded
+
+            // 
+            // Strange error message for saying  wrong app id
+            //
+            reject({ qlik: { message: 'Unknown app id' } });
+
+        } else if (reply.method === 'OnConnected') {
+            console.log('WS: CONNECTED!!!', reply.params.qSessionState);
+        } else {
+            console.log(this.msgBuffer);
+            this.wsReply(reply);
+        }
+
+
+    }
+
+    wsReply(data) {
+        let id = data.id;
+        if (id in this.msgBuffer) {
+            let promise = this.msgBuffer[id];
+            delete this.msgBuffer[id];
+            promise.resolve(data);
+        }
+    }
+    
+    wsCmd(cmd, params) {
+        params = params || [];
+
+        let id = this.msgCounter++;
+        let openCmd = {
+            'jsonrpc': '2.0',
+            'id': id,
+            'method': cmd,
+            'handle': -1,
+            'params': params,
+        }
+
+        let promise = new Promise((resolve, reject) => {
+            this.msgBuffer[id] = {resolve, reject};
+        });
+        this.ws.send(JSON.stringify(openCmd));
+
+        return promise;    
     }
 
 
     async ping() {
         let startTime = Date.now();
         try {
-            let productVersion = await this.qws.productVersion();
+            // let productVersion = await this.qws.productVersion();
+            await this.wsCmd('ProductVersion');
         } catch (err) {
             console.warn('QWS: Ping failed: ', err);
             this.trigger('error', err);
@@ -59,28 +127,28 @@ class QlikWSTester extends ClassEvents {
 
     async delayedPing(time) {
         time = time || 0;
-        if (! this.session) {
+        if (!this.ws) {
             await this.open();
         }
-        
+
         await QlikWSTester.sleep(time);
-        
+
         // For testing purposes, set a fake timeout limit to mimick network drop
         if (this.fakeTimeout > 0 && time > this.fakeTimeout) {
-            if (this.session) this.session.close();
-            let err =  new Error('Fake timeout');
+            if (this.ws) this.ws.close();
+            let err = new Error('Fake timeout');
             this.trigger('error', err);
             throw err;
         } else {
             // Send ping
-            try catch if err.message === 'Socket closed', include sleep time
+            //try catch if err.message === 'Socket closed', include sleep time
             let timed = await this.ping();
             return timed;
         }
     }
 
     static sleep(time) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             setTimeout(resolve, time);
         });
     }
@@ -92,13 +160,30 @@ class QlikWSTester extends ClassEvents {
         let secure = url.startsWith('wss:');
 
         const config = {
-            schema: schema,
+            //            schema: schema,
             url: url,
-            createSocket: url => new WebSocket(url),
-            secure: true
+            //createSocket: url => new WebSocket(url),
+            secure: secure,
         };
         return config;
     }
+
+    
+    openApp(ws, appid) {
+        let openCmd = {
+            'jsonrpc': '2.0',
+            'id': MSGID_OPENDOC,
+            'method': 'OpenDoc',
+            'handle': -1,
+            'params': [
+                appid,
+                //'UserDirectory=QT; UserId=platform_tester'
+            ]
+        }
+        ws.send(JSON.stringify(openCmd));
+    
+    }
+    
 }
 
 
@@ -107,16 +192,16 @@ module.exports = QlikWSTester;
 
 function timeStampStr(now) {
     now = now || new Date();
-    if (! now instanceof Date) now = new Date(now);
+    if (!now instanceof Date) now = new Date(now);
 
     var tzo = -now.getTimezoneOffset(),
-    dif = tzo >= 0 ? '+' : '-',
-    pad = function(num, minLength) {
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function (num, minLength) {
             minLength = minLength || 2;
             var norm = Math.floor(Math.abs(num)).toString();
             var len = norm.length;
             var str = '';
-            for (let i = len; i < minLength; i++) { str += '0'  }
+            for (let i = len; i < minLength; i++) { str += '0' }
             str += norm;
             return str;
         };

@@ -4,9 +4,9 @@
 const qsocks = require('qsocks');
 const Chart = require('chart.js');
 // const QRCode = require('qrcode-js');
-const enigma = require('enigma.js');
-const SenseUtilities = require('enigma.js/sense-utilities');
-const schema = require('enigma.js/schemas/12.20.0.json');
+// const enigma = require('enigma.js');
+// const SenseUtilities = require('enigma.js/sense-utilities');
+// const schema = require('enigma.js/schemas/12.20.0.json');
 
 const ChartsTimeSlice = require('./lib/charts.js');
 const LineChart = require('./lib/linechart.js');
@@ -22,9 +22,9 @@ var path = location.pathname;
 var url = location.href;
 
 if (host === 'localhost') {
-    host = 'qlik.server.com';  // DEBUG
+    host = 'qlik.dfo.no';  // DEBUG
     path = '/public/content';  // DEBUG
-    url = 'https://test.qlik.server.com/public/content/wwwww';
+    url = 'https://qlik.server.com/public/content/wwwww';
 }
 
 let $divA = $('.testA');
@@ -348,13 +348,13 @@ if (isSecure) {
     const configWSS = {
         schema,
         url: senseURL,
-        createSocket: url => new WebSocket(url),
+        // FIXME: createSocket: url => new WebSocket(url),
         secure: true
     };
 
 
     authenticate(virtualProxy);
-    testWS(configWSS);
+    //testWS(configWSS);
     chartReposeTime(configWSS);
 } else {
     //if HTTP test WS and WSS
@@ -369,11 +369,11 @@ if (isSecure) {
     const configWS = {
         schema,
         url: senseURL,
-        createSocket: url => new WebSocket(url),
+        // FIXME: createSocket: url => new WebSocket(url),
         secure: false
     };
 
-    testWS(configWS)
+    //testWS(configWS)
 
     var senseURL = SenseUtilities.buildUrl({
         host: host,
@@ -385,7 +385,7 @@ if (isSecure) {
     const configWSS = {
         schema,
         url: senseURL,
-        createSocket: url => new WebSocket(url),
+        // FIXME: createSocket: url => new WebSocket(url),
         secure: true
     };
 

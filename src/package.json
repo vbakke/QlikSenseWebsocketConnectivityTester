@@ -13,7 +13,7 @@
     "moment": "^2.19.3",
     "qrcode-js": "0.0.2",
     "qsocks": "^3.2.1",
-    "ws": "^5.2.0"
+    "websocket": "^1.0.32"
   },
   "devDependencies": {},
   "scripts": {
