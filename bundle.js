@@ -1151,20 +1151,22 @@ let wsA = new QlikWSTester(url);
 let wsB = new QlikWSTester(url);
 let wsC = new QlikWSTester(url);
 
+let pairs = [[wsA, $divA], [wsB, $divB], [wsC, $divC]];
+for (let pair of pairs) {
+    let ws = pair[0];
+    let $div = pair[1];
+    ws.on('error', (err) => {
+        showError($div, err);
+    });
+    ws.on('closed', () => {
+        showError($div, 'Websocket has been closed');
+    });
+}
 
-
-wsA.on('error', (err) => {
-    showError($divA, err);
-});
-wsB.on('error', (err) => {
-    showError($divB, err);
-});
-wsC.on('error', (err) => {
-    showError($divC, err);
-});
 
 function showError($element, err) {
-    $element.append('<div>'+err+'</div>')
+    let msg = (typeof err === 'string') ? err : (err.message) ? err.message : JSON.stringify(err);
+    $element.append('<div>'+msg+'</div>')
 }
 
 wsA.on('open', async () => {
