@@ -1,12 +1,7 @@
-//Use browserify app.js -o bundle.js to build bundle and 
-// cut and paste into HTML file.
+// Use `browserify app.js -o bundle.js` to build the bundle and copy and paste 
+// the content into the bottom <script> tag in `QlikSenseWebsocketTest.html`.
 
-const qsocks = require('qsocks');
 const Chart = require('chart.js');
-// const QRCode = require('qrcode-js');
-// const enigma = require('enigma.js');
-// const SenseUtilities = require('enigma.js/sense-utilities');
-// const schema = require('enigma.js/schemas/12.20.0.json');
 
 const ChartsTimeSlice = require('./lib/charts.js');
 const LineChart = require('./lib/linechart.js');
@@ -25,7 +20,7 @@ if (host === 'localhost') {
     host = 'qlik.server.com';  // DEBUG    
     path = '/public/content';  // DEBUG    
     url = 'https://'+host+path+'/';
-    url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
+    //url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
 }
 
 let $divA = $('.testA');
