@@ -1138,9 +1138,10 @@ var path = location.pathname;
 var url = location.href;
 
 if (host === 'localhost') {
-    host = 'qlik.dfo.no';  // DEBUG
-    path = '/public/content';  // DEBUG
-    url = 'https://qlik.server.com/public/content/wwwww';
+    host = 'qlik.server.com';  // DEBUG    
+    path = '/public/content';  // DEBUG    
+    url = 'https://'+host+path+'/';
+    url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
 }
 
 let $divA = $('.testA');
@@ -1158,8 +1159,14 @@ for (let pair of pairs) {
     ws.on('error', (err) => {
         showError($div, err);
     });
-    ws.on('closed', () => {
-        showError($div, 'Websocket has been closed');
+    ws.on('ping', () => {
+        ws.hasConnection = true;
+    });
+        ws.on('closed', () => {
+        if (ws.hasConnection) {
+            showError($div, 'Websocket closed: ' + chart.chart.timeStampStr());
+            ws.hasConnection = false;
+        }
     });
 }
 
@@ -1178,22 +1185,36 @@ wsA.on('open', async () => {
         console.log('Tick ping: ', responseTime);
         chartA.addData("", responseTime);
     }
-
+    
 });
 
 
-wsB.on('open', async () => {
+let wsBStartTime = Date.now();
+wsB.once('open', async () => {
     await wsB.ping();
-    let startTime = Date.now();
     let time;
     while (true) {
         await QlikWSTester.sleep(200);
-        time = new Date(Date.now() - startTime);
-        let timeStr = time.toISOString().substr(11,8);
-        $divB.find('#idleclock h3').text(timeStr);
+        if (wsB.hasConnection) {
+            time = new Date(Date.now() - wsBStartTime);
+            let timeStr = time.toISOString().substr(11,8);
+            $divB.find('#idleclock h3').text(timeStr);
+        }
     }
-
 });
+wsB.on('open', async () => {
+    // showError($divB, 'Websocket open: ' + chart.chart.timeStampStr());
+});
+wsB.on('ping', async () => {
+    showError($divB, 'Websocket connected: ' + chart.chart.timeStampStr());
+    wsBStartTime = Date.now();
+});
+wsB.on('closed', async () => {
+    await QlikWSTester.sleep(200);
+    await wsB.open();
+    await wsB.ping();
+});
+
 
 
 var waitTime = 60/64/64*1000;
@@ -1252,6 +1273,14 @@ chart.render();
 wsA.open();
 wsB.open();
 wsC.open();
+
+
+
+
+
+
+
+
 
 
 //Add support for virtual proxy. Need to not access the hub without the virtual proxy.
@@ -1451,63 +1480,6 @@ chartReposeTime = function (config) {
     })
 }
 
-
-if (isSecure) {
-    //if HTTPS only test WSS
-    var senseURL = SenseUtilities.buildUrl({
-        host: host,
-        port: 443,
-        secure: true,
-        prefix: virtualProxy ? "/" + virtualProxy : ''
-    });
-
-    const configWSS = {
-        schema,
-        url: senseURL,
-        // FIXME: createSocket: url => new WebSocket(url),
-        secure: true
-    };
-
-
-    authenticate(virtualProxy);
-    //testWS(configWSS);
-    chartReposeTime(configWSS);
-} else {
-    //if HTTP test WS and WSS
-    authenticate(virtualProxy);
-    var senseURL = SenseUtilities.buildUrl({
-        host: host,
-        port: 80,
-        secure: false,
-        prefix: virtualProxy ? "/" + virtualProxy : ''
-    });
-
-    const configWS = {
-        schema,
-        url: senseURL,
-        // FIXME: createSocket: url => new WebSocket(url),
-        secure: false
-    };
-
-    //testWS(configWS)
-
-    var senseURL = SenseUtilities.buildUrl({
-        host: host,
-        port: 443,
-        secure: true,
-        prefix: virtualProxy ? "/" + virtualProxy : ''
-    });
-
-    const configWSS = {
-        schema,
-        url: senseURL,
-        // FIXME: createSocket: url => new WebSocket(url),
-        secure: true
-    };
-
-    //testWS(configWSS);
-    //chartReposeTime(configWS);
-}
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./lib/charts.js":9,"./lib/linechart.js":11,"./lib/ws.js":12,"chart.js":15,"qsocks":90}],8:[function(require,module,exports){
 class ChartTimeSlice {
@@ -1971,6 +1943,10 @@ class QlikWSTester extends ClassEvents {
 
     }
 
+    isOpen() {
+        return (this.ws.readyState == WebSocket.OPEN);
+    }
+
     open() {
         console.log('QWS: Connecting to ', this.config.url)
         var self = this;
@@ -2075,6 +2051,7 @@ class QlikWSTester extends ClassEvents {
             throw err;
         }
         let timed = Date.now() - startTime;
+        this.trigger('ping', timed);
         // console.log('QWS: Ping took: ' + timed + ' ms');
         return timed;
     }

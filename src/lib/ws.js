@@ -16,6 +16,10 @@ class QlikWSTester extends ClassEvents {
 
     }
 
+    isOpen() {
+        return (this.ws.readyState == WebSocket.OPEN);
+    }
+
     open() {
         console.log('QWS: Connecting to ', this.config.url)
         var self = this;
@@ -120,6 +124,7 @@ class QlikWSTester extends ClassEvents {
             throw err;
         }
         let timed = Date.now() - startTime;
+        this.trigger('ping', timed);
         // console.log('QWS: Ping took: ' + timed + ' ms');
         return timed;
     }
