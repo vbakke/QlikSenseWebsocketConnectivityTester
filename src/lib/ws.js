@@ -22,6 +22,9 @@ class QlikWSTester extends ClassEvents {
         return (this.ws.readyState == WebSocket.OPEN);
     }
 
+    close() {
+        this.ws.close();
+    }
     open() {
         var self = this;
         self.debugMode && console.log('QWS: Connecting to ', this.config.url)

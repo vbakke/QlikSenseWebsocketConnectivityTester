@@ -43,6 +43,8 @@ ws.once('open', async () => {
     let apps = await ws.getApps();
     displayApps(connectionType, apps);
 
+    ws.close();
+
     // Start the other websockets
     wsA.open();
     wsB.open();
