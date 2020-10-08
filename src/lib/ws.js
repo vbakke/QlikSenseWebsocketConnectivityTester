@@ -10,6 +10,8 @@ class QlikWSTester extends ClassEvents {
         this.msgBuffer = {};
         this.fakeTimeout = 0;
 
+        this.debugMode = false;
+
         // this.open().then( () => {
         //     this.ping();
         // });    
@@ -21,27 +23,27 @@ class QlikWSTester extends ClassEvents {
     }
 
     open() {
-        console.log('QWS: Connecting to ', this.config.url)
         var self = this;
+        self.debugMode && console.log('QWS: Connecting to ', this.config.url)
         return new Promise((resolve, reject) => {
-            console.log('QWS: Opening new websocket');
+            self.debugMode && console.log('QWS: Opening new websocket');
             self.ws = new W3CWebSocket(self.config.url);
 
             self.ws.onerror = function (e) {
                 console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', e);
             };
             self.ws.onmessage = function (msg) {
-                console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
+                self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
                 self.messageLoop(msg.data)
             };
             self.ws.onclose = function (e) {
+                self.debugMode && console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
                 this.ws = undefined;
-                console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
                 self.trigger('closed');
             };
 
             self.ws.onopen = function () {
-                console.log('QWS: Opened');
+                self.debugMode && console.log('QWS: Opened');
                 self.trigger('open');
                 resolve();
             };
@@ -113,11 +115,33 @@ class QlikWSTester extends ClassEvents {
     }
 
 
+    async getApps() {
+        let result = await this.get('GetDocList');
+        return result.qDocList[0].value;
+    }
+    async getProductVersion() {
+        let result = await this.get('ProductVersion');
+        return result.qReturn;
+    }
+
+    async get(cmd) {
+        let reply;
+        try {
+            reply = await this.wsCmd(cmd);
+        } catch (err) {
+            console.warn('QWS: "' + cmd + '" failed: ', err);
+            this.trigger('error', err);
+            throw err;
+        }
+        return reply.result;
+    }
+
     async ping() {
         let startTime = Date.now();
+        let version;
+        let cmd = 'ProductVersion';
         try {
-            // let productVersion = await this.qws.productVersion();
-            await this.wsCmd('ProductVersion');
+            version = await this.wsCmd(cmd);
         } catch (err) {
             console.warn('QWS: Ping failed: ', err);
             this.trigger('error', err);

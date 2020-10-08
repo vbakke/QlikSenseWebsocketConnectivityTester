@@ -167,11 +167,13 @@
     </div>
   </div>
   <div style="clear: both">
-    <div id="AuthenticatedDiv" class="alert alert-danger" role="alert">
-      <span id="AuthenticatedIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-      <span id="Authenticated">Authentication</span>
-    </div>
-    <div id="ConnectedWSSDiv" class="alert alert-danger" role="alert">
+	<!--
+		<div id="AuthenticatedDiv" class="alert alert-danger" role="alert">
+			<span id="AuthenticatedIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+			<span id="Authenticated">Authentication</span>
+		</div>
+	-->
+		<div id="ConnectedWSSDiv" class="alert alert-danger" role="alert">
       <span id="ConnectedWSSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
       <span id="ConnectedWSS">Connect secure websocket</span>
     </div>
@@ -182,29 +184,31 @@
     <div id="DocListWSSDiv" class="alert alert-danger" role="alert">
       <span id="DocListWSSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
       <span id="DocListWSS">Application list through secure websocket</span>
-    </div>
-    <div id="ConnectedWSDiv" class="alert alert-danger" role="alert">
-      <span id="ConnectedWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-      <span id="ConnectedWS">Connect websocket</span>
-    </div>
-    <div id="ProductVersionWSDiv" class="alert alert-danger" role="alert">
-      <span id="ProductVersionWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-      <span id="ProductVersionWS">Product version collected through websocket</span>
-    </div>
-    <div id="DocListWSDiv" class="alert alert-danger" role="alert">
-      <span id="DocListWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-      <span id="DocListWS">Application list through websocket</span>
 	</div>
-	<div class="flex-container">
-		<div class="flex-grow1">
-			<h2>A) Websocket with continous activity</h2>
-			<div class="chart-container testA" style="position: relative; height:100px; width:75%">
-				<canvas id="Chart"></canvas>
-				<div style="font-size:smaller">Websocket ping response (ms)</div>
-			</div>
+	<!--
+		<div id="ConnectedWSDiv" class="alert alert-danger" role="alert">
+			<span id="ConnectedWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+			<span id="ConnectedWS">Connect websocket</span>
 		</div>
-		<div class="testB">			
-			<h2>B) No activity</h2>
+		<div id="ProductVersionWSDiv" class="alert alert-danger" role="alert">
+			<span id="ProductVersionWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+			<span id="ProductVersionWS">Product version collected through websocket</span>
+		</div>
+		<div id="DocListWSDiv" class="alert alert-danger" role="alert">
+			<span id="DocListWSIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+			<span id="DocListWS">Application list through websocket</span>
+		</div>
+	-->
+		<div class="flex-container">
+			<div class="flex-grow1">
+				<h2>A) Websocket with continous activity</h2>
+				<div class="chart-container testA" style="position: relative; height:100px; width:75%">
+					<canvas id="Chart"></canvas>
+					<div style="font-size:smaller">Websocket ping response (ms)</div>
+				</div>
+			</div>
+			<div class="testB">			
+				<h2>B) Websocket with no activity</h2>
 			<div id="idleclock">
 				<span>This websocket has been idle for:</span>
 				<h3>Not connected</h3>

@@ -32,9 +32,29 @@ let $divA = $('.testA');
 let $divB = $('.testB');
 let $divC = $('.testC');
 
+let ws = new QlikWSTester(url);
 let wsA = new QlikWSTester(url);
 let wsB = new QlikWSTester(url);
 let wsC = new QlikWSTester(url);
+
+
+ws.once('open', async () => {
+    let connectionType = 'WSS';
+    displayConnected(connectionType, ws.ws.url);
+
+    let version = await ws.getProductVersion();
+    displayProductVersion(connectionType, version);
+
+    let apps = await ws.getApps();
+    displayApps(connectionType, apps);
+
+    // Start the other websockets
+    wsA.open();
+    wsB.open();
+    wsC.open();
+
+});
+ws.open();
 
 let pairs = [[wsA, $divA], [wsB, $divB], [wsC, $divC]];
 for (let pair of pairs) {
@@ -46,13 +66,20 @@ for (let pair of pairs) {
     ws.on('ping', () => {
         ws.hasConnection = true;
     });
-        ws.on('closed', () => {
-        if (ws.hasConnection) {
-            showError($div, 'Websocket closed: ' + chart.chart.timeStampStr());
-            ws.hasConnection = false;
-        }
-    });
 }
+wsA.on('closed', () => showError($divA, 'Websocket closed: ' + chart.chart.timeStampStr()));
+wsC.on('closed', () => showError($divC, 'Websocket closed: ' + chart.chart.timeStampStr()));
+wsB.on('closed', () => {
+    if (wsB.hasConnection) {
+        let timeStr = '';
+        if (wsBStartTime) {
+            timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
+            wsBStartTime = Date.now();
+        }
+        showError($divB, chart.chart.timeStampStr() + ': Closed' + timeStr);
+        wsB.hasConnection = false;
+    }
+});
 
 
 function showError($element, err) {
@@ -73,7 +100,7 @@ wsA.on('open', async () => {
 });
 
 
-let wsBStartTime = Date.now();
+let wsBStartTime = undefined;
 wsB.once('open', async () => {
     await wsB.ping();
     let time;
@@ -89,8 +116,12 @@ wsB.once('open', async () => {
 wsB.on('open', async () => {
     // showError($divB, 'Websocket open: ' + chart.chart.timeStampStr());
 });
-wsB.on('ping', async () => {
-    showError($divB, 'Websocket connected: ' + chart.chart.timeStampStr());
+wsB.on('ping', async (ping) => {
+    let timeStr = '';
+    if (wsBStartTime) {
+        timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
+    }
+    showError($divB, chart.chart.timeStampStr() + ': Connected' + timeStr);
     wsBStartTime = Date.now();
 });
 wsB.on('closed', async () => {
@@ -154,13 +185,38 @@ let $chartcontainer = $('#testC');
 let chart = new ChartsTimeSlice($chartcontainer);
 chart.render();
 
-wsA.open();
-wsB.open();
-wsC.open();
 
 
 
 
+
+
+displayConnected = function (connectionType, url) {
+    let elementId = 'Connected' + connectionType;
+    displayStatus(elementId, "Connected " + connectionType + ' to ' + url);
+}
+
+
+displayProductVersion = function (connectionType, productVersion) {
+    let elementId = 'ProductVersion' + connectionType;
+    displayStatus(elementId, "Connected to " + productVersion + " retrieved using " + connectionType);
+}
+
+displayApps = function (connectionType, docList) {
+    let elementId = 'DocList' + connectionType;
+    
+    var nbrOfDoc = docList.length.toString();
+
+    displayStatus(elementId, "Application list of " + nbrOfDoc + " applications retrieved using " + connectionType);
+}
+
+displayStatus = function (docListElement, str) {
+    document.getElementById(docListElement).innerHTML = str;
+    document.getElementById(docListElement + "Div").classList.remove('alert-danger');
+    document.getElementById(docListElement + "Div").classList.add('alert-success');
+    document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
+    document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
+}
 
 
 

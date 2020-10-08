@@ -1148,9 +1148,29 @@ let $divA = $('.testA');
 let $divB = $('.testB');
 let $divC = $('.testC');
 
+let ws = new QlikWSTester(url);
 let wsA = new QlikWSTester(url);
 let wsB = new QlikWSTester(url);
 let wsC = new QlikWSTester(url);
+
+
+ws.once('open', async () => {
+    let connectionType = 'WSS';
+    displayConnected(connectionType, ws.ws.url);
+
+    let version = await ws.getProductVersion();
+    displayProductVersion(connectionType, version);
+
+    let apps = await ws.getApps();
+    displayApps(connectionType, apps);
+
+    // Start the other websockets
+    wsA.open();
+    wsB.open();
+    wsC.open();
+
+});
+ws.open();
 
 let pairs = [[wsA, $divA], [wsB, $divB], [wsC, $divC]];
 for (let pair of pairs) {
@@ -1162,13 +1182,20 @@ for (let pair of pairs) {
     ws.on('ping', () => {
         ws.hasConnection = true;
     });
-        ws.on('closed', () => {
-        if (ws.hasConnection) {
-            showError($div, 'Websocket closed: ' + chart.chart.timeStampStr());
-            ws.hasConnection = false;
-        }
-    });
 }
+wsA.on('closed', () => showError($divA, 'Websocket closed: ' + chart.chart.timeStampStr()));
+wsC.on('closed', () => showError($divC, 'Websocket closed: ' + chart.chart.timeStampStr()));
+wsB.on('closed', () => {
+    if (wsB.hasConnection) {
+        let timeStr = '';
+        if (wsBStartTime) {
+            timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
+            wsBStartTime = Date.now();
+        }
+        showError($divB, chart.chart.timeStampStr() + ': Closed' + timeStr);
+        wsB.hasConnection = false;
+    }
+});
 
 
 function showError($element, err) {
@@ -1189,7 +1216,7 @@ wsA.on('open', async () => {
 });
 
 
-let wsBStartTime = Date.now();
+let wsBStartTime = undefined;
 wsB.once('open', async () => {
     await wsB.ping();
     let time;
@@ -1205,8 +1232,12 @@ wsB.once('open', async () => {
 wsB.on('open', async () => {
     // showError($divB, 'Websocket open: ' + chart.chart.timeStampStr());
 });
-wsB.on('ping', async () => {
-    showError($divB, 'Websocket connected: ' + chart.chart.timeStampStr());
+wsB.on('ping', async (ping) => {
+    let timeStr = '';
+    if (wsBStartTime) {
+        timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
+    }
+    showError($divB, chart.chart.timeStampStr() + ': Connected' + timeStr);
     wsBStartTime = Date.now();
 });
 wsB.on('closed', async () => {
@@ -1270,13 +1301,38 @@ let $chartcontainer = $('#testC');
 let chart = new ChartsTimeSlice($chartcontainer);
 chart.render();
 
-wsA.open();
-wsB.open();
-wsC.open();
 
 
 
 
+
+
+displayConnected = function (connectionType, url) {
+    let elementId = 'Connected' + connectionType;
+    displayStatus(elementId, "Connected " + connectionType + ' to ' + url);
+}
+
+
+displayProductVersion = function (connectionType, productVersion) {
+    let elementId = 'ProductVersion' + connectionType;
+    displayStatus(elementId, "Connected to " + productVersion + " retrieved using " + connectionType);
+}
+
+displayApps = function (connectionType, docList) {
+    let elementId = 'DocList' + connectionType;
+    
+    var nbrOfDoc = docList.length.toString();
+
+    displayStatus(elementId, "Application list of " + nbrOfDoc + " applications retrieved using " + connectionType);
+}
+
+displayStatus = function (docListElement, str) {
+    document.getElementById(docListElement).innerHTML = str;
+    document.getElementById(docListElement + "Div").classList.remove('alert-danger');
+    document.getElementById(docListElement + "Div").classList.add('alert-success');
+    document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
+    document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
+}
 
 
 
@@ -1937,6 +1993,8 @@ class QlikWSTester extends ClassEvents {
         this.msgBuffer = {};
         this.fakeTimeout = 0;
 
+        this.debugMode = false;
+
         // this.open().then( () => {
         //     this.ping();
         // });    
@@ -1948,27 +2006,27 @@ class QlikWSTester extends ClassEvents {
     }
 
     open() {
-        console.log('QWS: Connecting to ', this.config.url)
         var self = this;
+        self.debugMode && console.log('QWS: Connecting to ', this.config.url)
         return new Promise((resolve, reject) => {
-            console.log('QWS: Opening new websocket');
+            self.debugMode && console.log('QWS: Opening new websocket');
             self.ws = new W3CWebSocket(self.config.url);
 
             self.ws.onerror = function (e) {
                 console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', e);
             };
             self.ws.onmessage = function (msg) {
-                console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
+                self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
                 self.messageLoop(msg.data)
             };
             self.ws.onclose = function (e) {
+                self.debugMode && console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
                 this.ws = undefined;
-                console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
                 self.trigger('closed');
             };
 
             self.ws.onopen = function () {
-                console.log('QWS: Opened');
+                self.debugMode && console.log('QWS: Opened');
                 self.trigger('open');
                 resolve();
             };
@@ -2040,11 +2098,33 @@ class QlikWSTester extends ClassEvents {
     }
 
 
+    async getApps() {
+        let result = await this.get('GetDocList');
+        return result.qDocList[0].value;
+    }
+    async getProductVersion() {
+        let result = await this.get('ProductVersion');
+        return result.qReturn;
+    }
+
+    async get(cmd) {
+        let reply;
+        try {
+            reply = await this.wsCmd(cmd);
+        } catch (err) {
+            console.warn('QWS: "' + cmd + '" failed: ', err);
+            this.trigger('error', err);
+            throw err;
+        }
+        return reply.result;
+    }
+
     async ping() {
         let startTime = Date.now();
+        let version;
+        let cmd = 'ProductVersion';
         try {
-            // let productVersion = await this.qws.productVersion();
-            await this.wsCmd('ProductVersion');
+            version = await this.wsCmd(cmd);
         } catch (err) {
             console.warn('QWS: Ping failed: ', err);
             this.trigger('error', err);
