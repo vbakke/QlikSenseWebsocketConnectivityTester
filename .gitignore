@@ -2,3 +2,4 @@
 *.CSR
 node_modules/*
 src/node_modules/
+src-testserver/node_modules/

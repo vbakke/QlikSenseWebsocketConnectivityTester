@@ -1,0 +1,14 @@
+{
+  "name": "src-testserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ws-testserver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^7.3.1"
+  }
+}
