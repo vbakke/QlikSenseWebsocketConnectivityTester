@@ -188,8 +188,6 @@ chart.render();
 
 
 
-
-
 displayConnected = function (connectionType, url) {
     let elementId = 'Connected' + connectionType;
     displayStatus(elementId, "Connected " + connectionType + ' to ' + url);
@@ -612,13 +610,14 @@ class ChartTimeSlice {
             str = "0";
         }
         else {
+            var fulltime = timespan;
             var ms = Math.round(timespan % 1000);
             timespan = Math.floor(timespan / 1000);
             var sec = timespan % 60;
             //var minFrac = timespan / 60;
             timespan = Math.floor(timespan / 60);
             var min = timespan % 60;
-            timespan = Math.floor(timespan / 60);
+            var hours = Math.floor(timespan / 60);
             
             if (min < 1) {
                 if (sec == '0' && ms < 1) str = ''
@@ -628,8 +627,8 @@ class ChartTimeSlice {
                 }
             } else {
                 str = ((sec) ? min+':'+ (''+sec).padStart(2, '0') : min) + ' min ' ;
-                if (timespan > 0) str = timespan + ((timespan==1)?' hour ':' hours ') + str;
             }
+            if (hours > 0) str = hours + ((hours==1)?' hour ':' hours ') + str;
         }
         return str;
     }
@@ -877,11 +876,6 @@ class QlikWSTester extends ClassEvents {
         this.fakeTimeout = 0;
 
         this.debugMode = false;
-
-        // this.open().then( () => {
-        //     this.ping();
-        // });    
-
     }
 
     isOpen() {
@@ -986,8 +980,10 @@ class QlikWSTester extends ClassEvents {
 
     async getApps() {
         let result = await this.get('GetDocList');
-        return result.qDocList[0].value;
+        let apps = result.qDocList;
+        return apps;
     }
+
     async getProductVersion() {
         let result = await this.get('ProductVersion');
         return result.qReturn;

@@ -189,13 +189,14 @@ class ChartTimeSlice {
             str = "0";
         }
         else {
+            var fulltime = timespan;
             var ms = Math.round(timespan % 1000);
             timespan = Math.floor(timespan / 1000);
             var sec = timespan % 60;
             //var minFrac = timespan / 60;
             timespan = Math.floor(timespan / 60);
             var min = timespan % 60;
-            timespan = Math.floor(timespan / 60);
+            var hours = Math.floor(timespan / 60);
             
             if (min < 1) {
                 if (sec == '0' && ms < 1) str = ''
@@ -205,8 +206,8 @@ class ChartTimeSlice {
                 }
             } else {
                 str = ((sec) ? min+':'+ (''+sec).padStart(2, '0') : min) + ' min ' ;
-                if (timespan > 0) str = timespan + ((timespan==1)?' hour ':' hours ') + str;
             }
+            if (hours > 0) str = hours + ((hours==1)?' hour ':' hours ') + str;
         }
         return str;
     }

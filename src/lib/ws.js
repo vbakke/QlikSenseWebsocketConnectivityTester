@@ -11,11 +11,6 @@ class QlikWSTester extends ClassEvents {
         this.fakeTimeout = 0;
 
         this.debugMode = false;
-
-        // this.open().then( () => {
-        //     this.ping();
-        // });    
-
     }
 
     isOpen() {
@@ -120,8 +115,10 @@ class QlikWSTester extends ClassEvents {
 
     async getApps() {
         let result = await this.get('GetDocList');
-        return result.qDocList[0].value;
+        let apps = result.qDocList;
+        return apps;
     }
+
     async getProductVersion() {
         let result = await this.get('ProductVersion');
         return result.qReturn;

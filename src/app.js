@@ -186,8 +186,6 @@ chart.render();
 
 
 
-
-
 displayConnected = function (connectionType, url) {
     let elementId = 'Connected' + connectionType;
     displayStatus(elementId, "Connected " + connectionType + ' to ' + url);
