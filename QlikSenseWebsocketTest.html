@@ -18,6 +18,9 @@
 
 
 <style>
+	body {
+		margin: 0 10px;
+	}
 	h1 {
 		font-size: 26px;
 	}
@@ -201,23 +204,33 @@
 	-->
 		<div class="flex-container">
 			<div class="flex-grow1">
-				<h2>A) Websocket with continous activity</h2>
+				<h2>Websocket with continous activity</h2>
 				<div class="chart-container testA" style="position: relative; height:100px; width:75%">
 					<canvas id="Chart"></canvas>
 					<div style="font-size:smaller">Websocket ping response (ms)</div>
 				</div>
 			</div>
-			<div class="testB">			
-				<h2>B) Websocket with no activity</h2>
-			<div id="idleclock">
+			<div class="flex-grow2 testInactive">			
+				<h2>Websocket #1 with no activity</h2>
+				<div class="idleclock">
+					<span>This websocket has been idle for:</span>
+					<h3>Not connected</h3>
+				</div>
+			</div>
+			<div class="flex-grow2 testInactive">
+				<h2>Websocket #2 with no activity</h2>
+				<div class="idleclock">
+					<span>This websocket has been idle for:</span>
+					<h3>Not connected</h3>
+				</div>
+			</div>
+		<div class="flex-grow2 testInactive">
+			<h2>Websocket #3 with no activity</h2>
+			<div class="idleclock">
 				<span>This websocket has been idle for:</span>
 				<h3>Not connected</h3>
 			</div>
-		</div>
-		<div class="flex-grow2 testC">			
-			<h2>C) Websocket with long idle periods</h2>
-			<div id="testC"></div>
-		</div>
+	</div>
 	</div>
 
   </div>
@@ -225,11 +238,11 @@
 
 <!-- Insert the bundle.js inside the  -->
 <script>
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (global){
+	(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Use `browserify app.js -o bundle.js` to build the bundle and copy and paste 
 // the content into the bottom <script> tag in `QlikSenseWebsocketTest.html`.
 
+//const qs = require('qs');
 const Chart = require('chart.js');
 
 const ChartsTimeSlice = require('./lib/charts.js');
@@ -252,61 +265,115 @@ if (host === 'localhost') {
     // url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
 }
 
+if (location.search.includes('?')) {
+    if (location.search == '?localhost') url = 'http://localhost:8080'+path+'/'; 
+    else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/'; 
+}
+
 let $divA = $('.testA');
-let $divB = $('.testB');
-let $divC = $('.testC');
+let $divsInactive = $('.testInactive');
+
 
 let ws = new QlikWSTester(url);
 let wsA = new QlikWSTester(url);
-let wsB = new QlikWSTester(url);
-let wsC = new QlikWSTester(url);
+let wsInactive = [];
+for (let i = 0; i < $divsInactive.length; i++) {
+    wsInactive.push(new QlikWSTester(url));
+}
 
-
+ws.on('error', (e, err) => {
+    displayConnected('ERROR', ws.ws.url);
+});
 ws.once('open', async () => {
-    let connectionType = 'WSS';
-    displayConnected(connectionType, ws.ws.url);
+    displayConnected('OK', ws.ws.url);
 
     let version = await ws.getProductVersion();
-    displayProductVersion(connectionType, version);
+    displayProductVersion('OK', version);
 
     let apps = await ws.getApps();
-    displayApps(connectionType, apps);
+    displayApps('OK', apps);
 
     ws.close();
 
     // Start the other websockets
     wsA.open();
-    wsB.open();
-    wsC.open();
-
+    for (let i = 0; i < wsInactive.length; i++) {
+        await QlikWSTester.sleep(1000);
+        wsInactive[i].open();
+    }    
 });
 ws.open();
 
-let pairs = [[wsA, $divA], [wsB, $divB], [wsC, $divC]];
-for (let pair of pairs) {
-    let ws = pair[0];
-    let $div = pair[1];
-    ws.on('error', (err) => {
-        showError($div, err);
+wsA.on('closed', () => showError($divA, 'Websocket closed: ' + chart.chart.timeStampStr()));
+
+let wsStartTime = [];
+let wsRetries = [];
+for (let i = 0; i < wsInactive.length; i++) {
+    let ws = wsInactive[i];
+    let $div = $($divsInactive[i]);
+    
+    wsStartTime[i] = null;
+    wsRetries[i] = 0;
+
+    // ws.on('error', (err) => {
+    //     showError($div, err);
+    // });
+
+    ws.on('closed', () => {
+        if (ws.hasConnection) {
+            let timeStr = '';
+            if (wsStartTime[i]) {
+                timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + ' later)';
+                wsStartTime[i] = Date.now();
+            }
+            showError($div, chart.chart.timeStampStr() + ': Closed' + timeStr);
+            ws.hasConnection = false;
+        }
     });
-    ws.on('ping', () => {
+
+    ws.once('open', async () => {
+        await ws.ping();
+
+        // Update the displayed time
+        let time;
+        while (true) {
+            await QlikWSTester.sleep(200);
+            if (ws.hasConnection) {
+                time = new Date(Date.now() - wsStartTime[i]);
+                let timeStr = time.toISOString().substr(11,8);
+                $div.find('.idleclock h3').text(timeStr);
+            }
+        }
+    });
+    
+    ws.on('ping', async (ping) => {
         ws.hasConnection = true;
+        let timeStr = '';
+        if (wsStartTime[i]) {
+            timeStr = ' (after ' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + '';
+            if (wsRetries[i]) {
+                timeStr += ' and ' + wsRetries[i] + ' retries';
+            }
+            timeStr += ')';
+        }
+        showError($div, chart.chart.timeStampStr() + ': Connected' + timeStr);
+        wsStartTime[i] = Date.now();
+        wsRetries[i] = 0;
+    });
+    ws.on('closed', async () => {       
+        let downtime = Date.now() - wsStartTime[i];
+        let pause;
+        if (downtime < 60*1000) pause = 100;
+        else pause = 15*1000;
+
+        wsRetries[i]++;
+        console.log((new Date()).toISOString() + ': WS #'+i+': Retry: '+wsRetries[i] + ' pausing ' + pause);
+        await QlikWSTester.sleep(pause);
+
+        await ws.open();
+        await ws.ping();
     });
 }
-wsA.on('closed', () => showError($divA, 'Websocket closed: ' + chart.chart.timeStampStr()));
-wsC.on('closed', () => showError($divC, 'Websocket closed: ' + chart.chart.timeStampStr()));
-wsB.on('closed', () => {
-    if (wsB.hasConnection) {
-        let timeStr = '';
-        if (wsBStartTime) {
-            timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
-            wsBStartTime = Date.now();
-        }
-        showError($divB, chart.chart.timeStampStr() + ': Closed' + timeStr);
-        wsB.hasConnection = false;
-    }
-});
-
 
 function showError($element, err) {
     let msg = (typeof err === 'string') ? err : (err.message) ? err.message : JSON.stringify(err);
@@ -315,53 +382,24 @@ function showError($element, err) {
 
 wsA.on('open', async () => {
     let responseTime = await wsA.ping();
-    console.log('Tick ping: ', responseTime);
+    //console.log('Tick ping: ', responseTime);
     chartA.addData("", responseTime);
     while (true) {
         responseTime = await wsA.delayedPing(2000);
-        console.log('Tick ping: ', responseTime);
+        //console.log('Tick ping: ', responseTime);
         chartA.addData("", responseTime);
     }
     
 });
 
 
-let wsBStartTime = undefined;
-wsB.once('open', async () => {
-    await wsB.ping();
-    let time;
-    while (true) {
-        await QlikWSTester.sleep(200);
-        if (wsB.hasConnection) {
-            time = new Date(Date.now() - wsBStartTime);
-            let timeStr = time.toISOString().substr(11,8);
-            $divB.find('#idleclock h3').text(timeStr);
-        }
-    }
-});
-wsB.on('open', async () => {
-    // showError($divB, 'Websocket open: ' + chart.chart.timeStampStr());
-});
-wsB.on('ping', async (ping) => {
-    let timeStr = '';
-    if (wsBStartTime) {
-        timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsBStartTime) + ' later)';
-    }
-    showError($divB, chart.chart.timeStampStr() + ': Connected' + timeStr);
-    wsBStartTime = Date.now();
-});
-wsB.on('closed', async () => {
-    await QlikWSTester.sleep(200);
-    await wsB.open();
-    await wsB.ping();
-});
 
 
 
 var waitTime = 60/64/64*1000;
 // waitTime = 1000;
 // wsC.fakeTimeout = 3500;
-
+/*
 wsC.on('open',  async function (responseTime)  {
     let tooSmall = false;
     let newTime;
@@ -400,7 +438,7 @@ wsC.on('open',  async function (responseTime)  {
         }
     }
 });
-
+*/
 
 
 
@@ -415,238 +453,42 @@ chart.render();
 
 
 
-
-
-displayConnected = function (connectionType, url) {
-    let elementId = 'Connected' + connectionType;
-    displayStatus(elementId, "Connected " + connectionType + ' to ' + url);
+displayConnected = function (msgType, url) {
+    let elementId = 'ConnectedWSS';
+    if (msgType === 'OK')
+        displayStatus(elementId, msgType, 'Connected to ' + url);
+    else
+        displayStatus(elementId, msgType, 'Failed connecting to ' + url);
 }
 
 
-displayProductVersion = function (connectionType, productVersion) {
-    let elementId = 'ProductVersion' + connectionType;
-    displayStatus(elementId, "Connected to " + productVersion + " retrieved using " + connectionType);
+displayProductVersion = function (msgType, productVersion) {
+    let elementId = 'ProductVersionWSS';
+    displayStatus(elementId, msgType, 'Connected to version: ' + productVersion );
 }
 
-displayApps = function (connectionType, docList) {
-    let elementId = 'DocList' + connectionType;
+displayApps = function (msgType, docList) {
+    let elementId = 'DocListWSS';
     
     var nbrOfDoc = docList.length.toString();
 
-    displayStatus(elementId, "Application list of " + nbrOfDoc + " applications retrieved using " + connectionType);
+    displayStatus(elementId, msgType, 'Application list of ' + nbrOfDoc + ' applications');
 }
 
-displayStatus = function (docListElement, str) {
+displayStatus = function (docListElement, msgType, str) {
     document.getElementById(docListElement).innerHTML = str;
-    document.getElementById(docListElement + "Div").classList.remove('alert-danger');
-    document.getElementById(docListElement + "Div").classList.add('alert-success');
-    document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
-    document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
-}
-
-
-
-
-
-
-//Add support for virtual proxy. Need to not access the hub without the virtual proxy.
-var regexpResults = /([\w\d-]*)\/content/i.exec(path);
-if (regexpResults != null) {
-    var virtualProxy = regexpResults[1];
-} else {
-    var virtualProxy = "";
-}
-
-if (protocol == "https:") {
-    var isSecure = true;
-    document.getElementById("ConnectedWSDiv").style.display = 'none';
-    document.getElementById("DocListWSDiv").style.display = 'none';
-    document.getElementById("ProductVersionWSDiv").style.display = 'none';
-} else {
-    var isSecure = false;
-}
-
-authenticate = function (virtualProxy) {
-    xmlhttp = new XMLHttpRequest();
-
-    xmlhttp.onreadystatechange = function () {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            document.getElementById("Authenticated").innerHTML = "Authenticated";
-            document.getElementById("AuthenticatedDiv").classList.remove('alert-danger');
-            document.getElementById("AuthenticatedDiv").classList.add('alert-success');
-            document.getElementById("AuthenticatedIcon").classList.remove('glyphicon-ban-circle');
-            document.getElementById("AuthenticatedIcon").classList.add('glyphicon-ok-circle');
-        } else if (xmlhttp.readyState == 4) {
-            document.getElementById("Authenticated").innerHTML = "Authentication error " + xmlhttp.status.toString() + " " + xmlhttp.responseText;
-        }
+    if (msgType === 'OK') {
+        document.getElementById(docListElement + "Div").classList.remove('alert-danger');
+        document.getElementById(docListElement + "Div").classList.add('alert-success');
+        document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
+        document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
     }
-
-    if (virtualProxy != "") {
-        var reqString = "/" + virtualProxy + "/hub?xrfkey=" + xrfkey;
-    } else {
-        var reqString = "/hub?xrfkey=" + xrfkey;
-    }
-
-    xmlhttp.open("GET", reqString, true);
-    xmlhttp.setRequestHeader('x-qlik-xrfkey', xrfkey);
-    xmlhttp.send();
 }
 
-//Test web socket configuration
-testWS = function (config) {
-    if (config.secure) {
-        var connectElement = "ConnectedWSS";
-        var docListElement = "DocListWSS";
-        var productVersionElement = "ProductVersionWSS";
-        var connectionType = "WSS";
-    } else {
-        var connectElement = "ConnectedWS";
-        var docListElement = "DocListWS";
-        var productVersionElement = "ProductVersionWS";
-        var connectionType = "WS";
-    }
-
-    //Connect to server
-    const session = enigma.create(config);
-
-    //Open Session
-    session.open().then((global) => {
-
-        console.log(global)
-        document.getElementById(connectElement).innerHTML = "Connected " + connectionType;
-        document.getElementById(connectElement + "Div").classList.remove('alert-danger');
-        document.getElementById(connectElement + "Div").classList.add('alert-success');
-        document.getElementById(connectElement + "Icon").classList.remove('glyphicon-ban-circle');
-        document.getElementById(connectElement + "Icon").classList.add('glyphicon-ok-circle');
-
-        //Get server version
-        global.productVersion().then(function (productVersion) {
-            document.getElementById(productVersionElement).innerHTML = "Connected to " + productVersion + " retrieved using " + connectionType;
-            document.getElementById(productVersionElement + "Div").classList.remove('alert-danger');
-            document.getElementById(productVersionElement + "Div").classList.add('alert-success');
-            document.getElementById(productVersionElement + "Icon").classList.remove('glyphicon-ban-circle');
-            document.getElementById(productVersionElement + "Icon").classList.add('glyphicon-ok-circle');
-
-        }, function (err) {
-            document.getElementById(productVersionElement).innerHTML = "Failed to get productVersion " + err + " using " + connectionType;
-        });
-
-        //Get document list
-        global.getDocList().then(function (docList) {
-            var nbrOfDoc = docList.length.toString();
-            document.getElementById(docListElement).innerHTML = "Application list of " + nbrOfDoc + " applications retrieved using " + connectionType;
-            document.getElementById(docListElement + "Div").classList.remove('alert-danger');
-            document.getElementById(docListElement + "Div").classList.add('alert-success');
-            document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
-            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
-        }, function (err) {
-            document.getElementById(docListElement).innerHTML = "Failed to get application list " + err + " using " + connectionType;
-        });
-    }, function (err) {
-        document.getElementById(connectElement).innerHTML = "Connection failed " + err;
-    });
-}
-
-window.onfocus = function () {
-    hasFocus = true;
-};
-
-window.onblur = function () {
-    hasFocus = false;
-};
-
-chartReposeTime = function (config) {
-    var labels = [];
-    var values = [];
-
-    var data = {
-        labels: labels,
-        datasets: [{
-            label: "Response Time",
-            fillColor: "rgba(220,220,220,0.2)",
-            strokeColor: "#4C8C2B",
-            pointColor: " #5F6062",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(220,220,220,1)",
-            data: values
-        }]
-    };
-
-    var ctx = document.getElementById("Chart").getContext("2d");
-    var options = {
-        responsive: true,
-        legend: {
-            display: false
-        },
-        scales: {
-            yAxes: [{
-                ticks: {
-                    suggestedMin: 0,
-                    suggestedMax: 100
-                }
-            }]
-        }
-    };
-
-    var myNewChart = new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: options
-    });
-
-    function addData(chart, label, data) {
-        chart.data.labels.push(label);
-        chart.data.datasets.forEach((dataset) => {
-            dataset.data.push(data);
-        });
-        chart.update();
-    }
-
-    function removeData(chart) {
-        chart.data.labels.pop();
-        chart.data.datasets.forEach((dataset) => {
-            dataset.data.splice(0, 1);
-        });
-        chart.update();
-    }
 
 
-    var trackResponse = new Array();
-    //Connect to server
-    const session = enigma.create(config);
 
-    //Open Session
-    session.open().then((global) => {
-        setInterval(function () {
-            if (hasFocus) {
-                var startTime = new Date(); //Start
-                //Get server version
-                global.productVersion().then(function (productVersion) {
-                    var endTime = new Date();
-                    var responseTime = endTime.getTime() - startTime.getTime();
-                    trackResponse.push(responseTime);
-                    console.log(responseTime);
 
-                    addData(myNewChart, "", responseTime);
-                    if (myNewChart.data.datasets[0].data.length > 90) {
-                        removeData(myNewChart);
-                    }
-
-                }, function (err) {
-                    addData(myNewChart, "Error", 0);
-                    if (myNewChart.data.datasets[0].data.length > 90) {
-                        removeData(myNewChart);
-                    }
-                });
-            }
-
-        }, 1000);
-
-    })
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./lib/charts.js":3,"./lib/linechart.js":5,"./lib/ws.js":6,"chart.js":7}],2:[function(require,module,exports){
 class ChartTimeSlice {
     constructor($container, minTime, maxTime) {
@@ -1105,11 +947,6 @@ class QlikWSTester extends ClassEvents {
         this.fakeTimeout = 0;
 
         this.debugMode = false;
-
-        // this.open().then( () => {
-        //     this.ping();
-        // });    
-
     }
 
     isOpen() {
@@ -1126,8 +963,9 @@ class QlikWSTester extends ClassEvents {
             self.debugMode && console.log('QWS: Opening new websocket');
             self.ws = new W3CWebSocket(self.config.url);
 
-            self.ws.onerror = function (e) {
-                console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', e);
+            self.ws.onerror = function (err) {
+                console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', err);
+                self.trigger('error', err);
             };
             self.ws.onmessage = function (msg) {
                 self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
@@ -1146,7 +984,6 @@ class QlikWSTester extends ClassEvents {
             };
 
             // ,  (err) => {
-            //     this.trigger('error');
             //     reject(err);
             // });
         });
@@ -1175,7 +1012,7 @@ class QlikWSTester extends ClassEvents {
         } else if (reply.method === 'OnConnected') {
             console.log('WS: CONNECTED!!!', reply.params.qSessionState);
         } else {
-            console.log(this.msgBuffer);
+            //console.log(this.msgBuffer);
             this.wsReply(reply);
         }
 
@@ -1217,6 +1054,7 @@ class QlikWSTester extends ClassEvents {
         let apps = result.qDocList;
         return apps;
     }
+
     async getProductVersion() {
         let result = await this.get('ProductVersion');
         return result.qReturn;

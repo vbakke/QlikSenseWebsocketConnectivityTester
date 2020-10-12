@@ -18,6 +18,9 @@
 
 
 <style>
+	body {
+		margin: 0 10px;
+	}
 	h1 {
 		font-size: 26px;
 	}
@@ -201,23 +204,33 @@
 	-->
 		<div class="flex-container">
 			<div class="flex-grow1">
-				<h2>A) Websocket with continous activity</h2>
+				<h2>Websocket with continous activity</h2>
 				<div class="chart-container testA" style="position: relative; height:100px; width:75%">
 					<canvas id="Chart"></canvas>
 					<div style="font-size:smaller">Websocket ping response (ms)</div>
 				</div>
 			</div>
-			<div class="testB">			
-				<h2>B) Websocket with no activity</h2>
-			<div id="idleclock">
+			<div class="flex-grow2 testInactive">			
+				<h2>Websocket #1 with no activity</h2>
+				<div class="idleclock">
+					<span>This websocket has been idle for:</span>
+					<h3>Not connected</h3>
+				</div>
+			</div>
+			<div class="flex-grow2 testInactive">
+				<h2>Websocket #2 with no activity</h2>
+				<div class="idleclock">
+					<span>This websocket has been idle for:</span>
+					<h3>Not connected</h3>
+				</div>
+			</div>
+		<div class="flex-grow2 testInactive">
+			<h2>Websocket #3 with no activity</h2>
+			<div class="idleclock">
 				<span>This websocket has been idle for:</span>
 				<h3>Not connected</h3>
 			</div>
-		</div>
-		<div class="flex-grow2 testC">			
-			<h2>C) Websocket with long idle periods</h2>
-			<div id="testC"></div>
-		</div>
+	</div>
 	</div>
 
   </div>

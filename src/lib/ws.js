@@ -27,8 +27,9 @@ class QlikWSTester extends ClassEvents {
             self.debugMode && console.log('QWS: Opening new websocket');
             self.ws = new W3CWebSocket(self.config.url);
 
-            self.ws.onerror = function (e) {
-                console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', e);
+            self.ws.onerror = function (err) {
+                console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', err);
+                self.trigger('error', err);
             };
             self.ws.onmessage = function (msg) {
                 self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
@@ -47,7 +48,6 @@ class QlikWSTester extends ClassEvents {
             };
 
             // ,  (err) => {
-            //     this.trigger('error');
             //     reject(err);
             // });
         });
@@ -76,7 +76,7 @@ class QlikWSTester extends ClassEvents {
         } else if (reply.method === 'OnConnected') {
             console.log('WS: CONNECTED!!!', reply.params.qSessionState);
         } else {
-            console.log(this.msgBuffer);
+            //console.log(this.msgBuffer);
             this.wsReply(reply);
         }
 
