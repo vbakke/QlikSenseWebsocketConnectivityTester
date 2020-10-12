@@ -1,5 +1,7 @@
 const WebSocket = require('ws');
 
+const port = tryParseInt(process.argv[2], 8080);
+
 const msgs = {
     ProductVersion: { jsonrpc: "2.0", id: -1, result: { qReturn: "4.0.X" } },
     GetDocList: { jsonrpc:"2.0", id: -1, delta:true,result:{qDocList:[
@@ -9,18 +11,20 @@ const msgs = {
     Unknown: { jsonrpc: "2.0", id: -1, result: { msg: "Unknown command receieved" } },
 };
 
-const port = 8080;
-
+//----------------------------
+// Start the Websocket server
 function runServer(port) {
     const wss = new WebSocket.Server({ port: port });
 
     wss.on('connection', function connection(ws) {
         console.log('Client connected from: ' + ws._socket.remoteAddress + ':' + ws._socket.remotePort);
         ws.on('message', function incoming(message) {
-            console.log('received: %s', message);
-            respond(ws, message)
+            let reply = buildReply(message);
+            ws.send(reply);
+            console.log('received: %s -> %s', message, reply);
         });
 
+        // Send two typical Qlik Sense initial frames
         ws.send('{"jsonrpc":"2.0","method":"OnAuthenticationInformation","params":{"userId":"anonymousc3a7a0d7-cd4a-443c-82ee-14a267e9da3c","userDirectory":"NONE","mustAuthenticate":false}}');
         ws.send('{"jsonrpc":"2.0","method":"OnConnected","params":{"qSessionState":"SESSION_CREATED"}}');
     });
@@ -28,7 +32,7 @@ function runServer(port) {
     console.log('Server listening for websockets on port ' + port);
 }
 
-function respond(ws, incoming) {
+function buildReply(incoming) {
     let msgIn = JSON.parse(incoming);
     let id = msgIn.id; 
     let cmd = msgIn.method;
@@ -36,8 +40,20 @@ function respond(ws, incoming) {
     if (! (cmd in msgs)) cmd = 'Unknown';
     let reply =  msgs[cmd];
     reply.id = id;
-    ws.send(JSON.stringify(reply));
+
+    return JSON.stringify(reply);
 }
 
+function tryParseInt(str, defaultValue) {
+    var retValue = defaultValue;
+    if(str !== undefined && str !== null) {
+        if(str.length > 0) {
+            if (!isNaN(str)) {
+                retValue = parseInt(str);
+            }
+        }
+    }
+    return retValue;
+}
 
 runServer(port);
