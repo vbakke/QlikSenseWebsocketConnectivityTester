@@ -37,11 +37,11 @@ It might not be needed anymore.
 
 ## Development
 Use `src/QlikSenseWebsocketTest.html` when developing and testing locally. 
-Run `browserify app.js -o ../bundle.js` in the `src` folder to complie the JS files into `bundle.js`.
+Run `browserify app.js -o bundle.js` in the `src` folder to complie the JS files into `bundle.js`.
 
 To build a release version:
 * Copy `src/QlikSenseWebsocketTest.html` to `./QlikSenseWebsocketTest.html`
-* Replace `<script src="..\bundle.js"></script>` with 
+* Replace `<script src="bundle.js"></script>` with 
   
     ``` html
     <script>

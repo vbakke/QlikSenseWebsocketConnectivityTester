@@ -211,6 +211,33 @@ class ChartTimeSlice {
         }
         return str;
     }
+    dateStr(now) {
+        now = now || new Date();
+            
+        return now.toISOString().slice(0,10);
+    }
+    timeStr(now) {
+        now = now || new Date();
+    
+        var tzo = -now.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function(num, minLength) {
+                minLength = minLength || 2;
+                var norm = Math.floor(Math.abs(num)).toString();
+                var len = norm.length;
+                var str = '';
+                for (let i = len; i < minLength; i++) { str += '0'  }
+                str += norm;
+                return str;
+            };
+        return pad(now.getHours()) +
+            ':' + pad(now.getMinutes()) +
+            ':' + pad(now.getSeconds()) +
+            '.' + pad(now.getMilliseconds(), 3) +
+            ' ' + dif + pad(tzo / 60) +
+            ':' + pad(tzo % 60);
+    }
+    
     timeStampStr(now) {
         now = now || new Date();
     

@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // Use `browserify app.js -o bundle.js` to build the bundle and copy and paste 
 // the content into the bottom <script> tag in `QlikSenseWebsocketTest.html`.
 
@@ -38,7 +38,7 @@ let ws = new QlikWSTester(url);
 let wsA = new QlikWSTester(url);
 let wsInactive = [];
 for (let i = 0; i < $divsInactive.length; i++) {
-    wsInactive.push(new QlikWSTester(url));
+    wsInactive.push(new QlikWSTester(url, 100+i));
 }
 
 ws.on('error', (e, err) => {
@@ -57,9 +57,10 @@ ws.once('open', async () => {
 
     // Start the other websockets
     wsA.open();
+    await QlikWSTester.sleep(1000);
     for (let i = 0; i < wsInactive.length; i++) {
-        await QlikWSTester.sleep(1000);
         wsInactive[i].open();
+        await QlikWSTester.sleep(5000);
     }    
 });
 ws.open();
@@ -101,7 +102,8 @@ for (let i = 0; i < wsInactive.length; i++) {
             if (ws.hasConnection) {
                 time = new Date(Date.now() - wsStartTime[i]);
                 let timeStr = time.toISOString().substr(11,8);
-                $div.find('.idleclock h3').text(timeStr);
+                let $clock = $div.find('.idleclock h3');
+                if ($clock.text() !== timeStr) $clock.text(timeStr);
             }
         }
     });
@@ -214,7 +216,7 @@ chart.render();
 
 
 displayConnected = function (msgType, url) {
-    let elementId = 'ConnectedWSS';
+    let elementId = 'ConnectedWS';
     if (msgType === 'OK')
         displayStatus(elementId, msgType, 'Connected to ' + url);
     else
@@ -223,12 +225,12 @@ displayConnected = function (msgType, url) {
 
 
 displayProductVersion = function (msgType, productVersion) {
-    let elementId = 'ProductVersionWSS';
-    displayStatus(elementId, msgType, 'Connected to version: ' + productVersion );
+    let elementId = 'ProductVersionWS';
+    displayStatus(elementId, msgType, 'Connected to Qlik Sense version: ' + productVersion );
 }
 
 displayApps = function (msgType, docList) {
-    let elementId = 'DocListWSS';
+    let elementId = 'DocListWS';
     
     var nbrOfDoc = docList.length.toString();
 
@@ -237,11 +239,14 @@ displayApps = function (msgType, docList) {
 
 displayStatus = function (docListElement, msgType, str) {
     document.getElementById(docListElement).innerHTML = str;
+    document.getElementById(docListElement + "Div").classList.remove('alert-info');
+    document.getElementById(docListElement + "Icon").classList.remove('glyphicon-unchecked');
     if (msgType === 'OK') {
-        document.getElementById(docListElement + "Div").classList.remove('alert-danger');
         document.getElementById(docListElement + "Div").classList.add('alert-success');
-        document.getElementById(docListElement + "Icon").classList.remove('glyphicon-ban-circle');
         document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
+    } else if (msgType === 'ERROR') {
+        document.getElementById(docListElement + "Div").classList.add('alert-danger');
+        document.getElementById(docListElement + "Icon").classList.add('glyphicon-ban-circle');
     }
 }
 
@@ -698,9 +703,9 @@ const W3CWebSocket = require('websocket').w3cwebsocket;
 const ClassEvents = require('./event.js');
 
 class QlikWSTester extends ClassEvents {
-    constructor(url) {
+    constructor(url, identity) {
         super();
-        this.config = this.makeConfig(url);
+        this.config = this.makeConfig(url, identity);
         this.ws = undefined;
         this.msgCounter = 1;
         this.msgBuffer = {};
@@ -759,20 +764,17 @@ class QlikWSTester extends ClassEvents {
         if (reply.method === 'OnAuthenticationInformation') {
             if (reply.params && reply.params.mustAuthenticate) {
                 ws.close();
-                resolve(false);  // 502 - Cannot connecto to 
+                reject({ qlik: { message: 'Not authenticated' } });
             }
         } else if (reply.method === 'OnNoEngineAvailable') {
-            // OnMaxParallelSessionsExceeded
-
-            // 
-            // Strange error message for saying  wrong app id
-            //
+            // Strange error message for saying:  wrong app id
             reject({ qlik: { message: 'Unknown app id' } });
-
+        } else if (reply.method === 'OnMaxParallelSessionsExceeded') {
+            // Strange error message for saying: no license allocated 
+            reject({ qlik: { message: 'No license, or too many parallel sessions' } });
         } else if (reply.method === 'OnConnected') {
-            console.log('WS: CONNECTED!!!', reply.params.qSessionState);
+            console.log('WS: CONNECTED!!!', reply.params.qSessionState, this.config.url);
         } else {
-            //console.log(this.msgBuffer);
             this.wsReply(reply);
         }
 
@@ -785,7 +787,10 @@ class QlikWSTester extends ClassEvents {
             let promise = this.msgBuffer[id];
             delete this.msgBuffer[id];
             promise.resolve(data);
+        } else {
+            console.log('Unhandled msg from server: ' + JSON.stringify(data));
         }
+
     }
     
     wsCmd(cmd, params) {
@@ -816,8 +821,8 @@ class QlikWSTester extends ClassEvents {
     }
 
     async getProductVersion() {
-        let result = await this.get('ProductVersion');
-        return result.qReturn;
+        let result = await this.get('EngineVersion');
+        return result.qVersion.qComponentVersion;
     }
 
     async get(cmd) {
@@ -835,7 +840,7 @@ class QlikWSTester extends ClassEvents {
     async ping() {
         let startTime = Date.now();
         let version;
-        let cmd = 'ProductVersion';
+        let cmd = 'EngineVersion';
         try {
             version = await this.wsCmd(cmd);
         } catch (err) {
@@ -878,10 +883,12 @@ class QlikWSTester extends ClassEvents {
         });
     }
 
-    makeConfig(url) {
+    makeConfig(url, identity) {
         url = url.replace(/^http/, 'ws');
         let pos = url.indexOf('/content/');
         url = url.substr(0, pos) + '/app/engineData';
+        if (identity) url += '/identity/' + identity;
+
         let secure = url.startsWith('wss:');
 
         const config = {

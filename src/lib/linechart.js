@@ -14,7 +14,7 @@ class LineChart {
                 yAxes: [{
                     ticks: {
                         suggestedMin: 0,
-                        suggestedMax: 50
+                        suggestedMax: 30
                     }
                 }]
             }

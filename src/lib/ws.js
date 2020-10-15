@@ -1,11 +1,15 @@
 const W3CWebSocket = require('websocket').w3cwebsocket;
 const ClassEvents = require('./event.js');
 
+const CLOSE_REASON_NORMAL = 1000;
+
+
 class QlikWSTester extends ClassEvents {
-    constructor(url) {
+    constructor(url, identity) {
         super();
-        this.config = this.makeConfig(url);
+        this.config = this.makeConfig(url, identity);
         this.ws = undefined;
+        this.reconnectCounter = 0;
         this.msgCounter = 1;
         this.msgBuffer = {};
         this.fakeTimeout = 0;
@@ -18,14 +22,19 @@ class QlikWSTester extends ClassEvents {
     }
 
     close() {
-        this.ws.close();
+		if (this.ws.ready <= 1)
+			this.ws.close(CLOSE_REASON_NORMAL);
     }
     open() {
         var self = this;
-        self.debugMode && console.log('QWS: Connecting to ', this.config.url)
+        let url = this.config.url;
+        if (self.reconnectCounter) url += '-' + self.reconnectCounter;
+        self.reconnectCounter++;
+
+        self.debugMode && console.log('QWS: Connecting to ', url);
         return new Promise((resolve, reject) => {
             self.debugMode && console.log('QWS: Opening new websocket');
-            self.ws = new W3CWebSocket(self.config.url);
+            self.ws = new W3CWebSocket(url);
 
             self.ws.onerror = function (err) {
                 console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', err);
@@ -33,7 +42,7 @@ class QlikWSTester extends ClassEvents {
             };
             self.ws.onmessage = function (msg) {
                 self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
-                self.messageLoop(msg.data)
+                self.parseMessage(msg.data, resolve, reject)
             };
             self.ws.onclose = function (e) {
                 self.debugMode && console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
@@ -44,16 +53,12 @@ class QlikWSTester extends ClassEvents {
             self.ws.onopen = function () {
                 self.debugMode && console.log('QWS: Opened');
                 self.trigger('open');
-                resolve();
+                //resolve();
             };
-
-            // ,  (err) => {
-            //     reject(err);
-            // });
         });
     }
 
-    messageLoop(data) {
+    parseMessage(data, resolve, reject) {
         //
         // WebSocket message event loop 
         //
@@ -61,22 +66,26 @@ class QlikWSTester extends ClassEvents {
 
         let reply = JSON.parse(data);
         if (reply.method === 'OnAuthenticationInformation') {
-            if (reply.params && reply.params.mustAuthenticate) {
-                ws.close();
-                resolve(false);  // 502 - Cannot connecto to 
+			if (reply.params && reply.params.loginUri) {
+				if (this.ws.ready == 1) {
+					this.ws.close(CLOSE_REASON_NORMAL);
+				}
+				reject({ message: 'Needs authentication', loginUri: reply.params.loginUri } );
             }
         } else if (reply.method === 'OnNoEngineAvailable') {
-            // OnMaxParallelSessionsExceeded
-
-            // 
-            // Strange error message for saying  wrong app id
-            //
+            // Strange error message for saying:  wrong app id
             reject({ qlik: { message: 'Unknown app id' } });
-
+        } else if (reply.method === 'OnMaxParallelSessionsExceeded') {
+            // Strange error message for saying: no license allocated 
+            reject({ qlik: { message: 'No license, or too many parallel sessions' } });
         } else if (reply.method === 'OnConnected') {
-            console.log('WS: CONNECTED!!!', reply.params.qSessionState);
+            console.log('WS: CONNECTED!!!', reply.params.qSessionState, this.config.url);
+			resolve();
+        } else if (reply.method === 'OnSessionClosed') {
+            this.trigger('closed', 'OnSessionClosed');
+        } else if (reply.method === 'OnSessionTimedOut') {
+            this.trigger('closed', 'OnSessionTimedOut');
         } else {
-            //console.log(this.msgBuffer);
             this.wsReply(reply);
         }
 
@@ -89,7 +98,10 @@ class QlikWSTester extends ClassEvents {
             let promise = this.msgBuffer[id];
             delete this.msgBuffer[id];
             promise.resolve(data);
+        } else {
+            console.log('Unhandled msg from server: ' + JSON.stringify(data));
         }
+
     }
     
     wsCmd(cmd, params) {
@@ -120,8 +132,8 @@ class QlikWSTester extends ClassEvents {
     }
 
     async getProductVersion() {
-        let result = await this.get('ProductVersion');
-        return result.qReturn;
+        let result = await this.get('EngineVersion');
+        return result.qVersion.qComponentVersion;
     }
 
     async get(cmd) {
@@ -139,7 +151,7 @@ class QlikWSTester extends ClassEvents {
     async ping() {
         let startTime = Date.now();
         let version;
-        let cmd = 'ProductVersion';
+        let cmd = 'EngineVersion';
         try {
             version = await this.wsCmd(cmd);
         } catch (err) {
@@ -182,10 +194,12 @@ class QlikWSTester extends ClassEvents {
         });
     }
 
-    makeConfig(url) {
+    makeConfig(url, identity) {
         url = url.replace(/^http/, 'ws');
         let pos = url.indexOf('/content/');
         url = url.substr(0, pos) + '/app/engineData';
+        if (identity) url += '/identity/' + identity;
+
         let secure = url.startsWith('wss:');
 
         const config = {

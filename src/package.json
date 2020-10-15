@@ -18,7 +18,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify app.js -o ../bundle.js"
+    "build": "browserify app.js -o bundle.js"
   },
   "repository": {
     "type": "git",
