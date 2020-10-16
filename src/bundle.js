@@ -1,4 +1,4 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Use `browserify app.js -o bundle.js` to build the bundle and copy and paste 
 // the content into the bottom <script> tag in `QlikSenseWebsocketTest.html`.
 
@@ -19,26 +19,31 @@ var path = location.pathname;
 var url = location.href;
 
 if (host === 'localhost') {
-    host = 'qlik.server.com';  // DEBUG    
+    host = 'qlik.dfo.no';  // DEBUG    
     path = '/public/content';  // DEBUG    
-    url = 'https://'+host+path+'/';
-    // url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
+    url = 'https://' + host + path + '/';
+    url = 'http://localhost:4200' + path + '/';  // LOCAL DEBUG SERVER
 }
 
 if (location.search.includes('?')) {
-    if (location.search == '?localhost') url = 'http://localhost:8080'+path+'/'; 
-    else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/'; 
+    if (location.search == '?localhost') url = 'http://localhost:4200' + path + '/';
+    else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/';
+    else if (location.search == '?dfo') url = 'https://test.qlik.dfo.no/public/content/';
+    else if (location.search == '?vigo') url = 'https://qs.vigoiks.no/prod/content/';
+    else if (location.search == '?dummy') url = 'https://dummy-wss.vigoiks.no/prod/content/';
+    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/prod/content/';
 }
 
 let $divA = $('.testA');
 let $divsInactive = $('.testInactive');
 
 
-let ws = new QlikWSTester(url);
-let wsA = new QlikWSTester(url);
+let identity = 'WS-' + Math.floor(Math.random() * 9000 + 1000);
+let ws = new QlikWSTester(url, identity);
+let wsA = new QlikWSTester(url, identity + '-A');
 let wsInactive = [];
 for (let i = 0; i < $divsInactive.length; i++) {
-    wsInactive.push(new QlikWSTester(url, 100+i));
+    wsInactive.push(new QlikWSTester(url, identity + '-P-' + (1 + i)));
 }
 
 ws.on('error', (e, err) => {
@@ -56,43 +61,34 @@ ws.once('open', async () => {
     ws.close();
 
     // Start the other websockets
-    wsA.open();
+    //wsA.open();
     await QlikWSTester.sleep(1000);
     for (let i = 0; i < wsInactive.length; i++) {
         wsInactive[i].open();
         await QlikWSTester.sleep(5000);
-    }    
+    }
 });
 ws.open();
 
-wsA.on('closed', () => showError($divA, 'Websocket closed: ' + chart.chart.timeStampStr()));
+wsA.on('closed', (reason) => {
+    showError($divA, 'Websocket closed: "' + reason + '" ' + chart.chart.timeStr())
+});
 
 let wsStartTime = [];
 let wsRetries = [];
 for (let i = 0; i < wsInactive.length; i++) {
     let ws = wsInactive[i];
     let $div = $($divsInactive[i]);
-    
+
     wsStartTime[i] = null;
     wsRetries[i] = 0;
 
-    // ws.on('error', (err) => {
-    //     showError($div, err);
-    // });
-
-    ws.on('closed', () => {
-        if (ws.hasConnection) {
-            let timeStr = '';
-            if (wsStartTime[i]) {
-                timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + ' later)';
-                wsStartTime[i] = Date.now();
-            }
-            showError($div, chart.chart.timeStampStr() + ': Closed' + timeStr);
-            ws.hasConnection = false;
-        }
+    ws.on('error', (err) => {
+        showError($div, 'ERROR CAUGHT: ' + (typeof err === 'string' ? err : JSON.stringify(err)));
     });
 
     ws.once('open', async () => {
+        showError($div, chart.chart.dateStr());
         await ws.ping();
 
         // Update the displayed time
@@ -101,13 +97,13 @@ for (let i = 0; i < wsInactive.length; i++) {
             await QlikWSTester.sleep(200);
             if (ws.hasConnection) {
                 time = new Date(Date.now() - wsStartTime[i]);
-                let timeStr = time.toISOString().substr(11,8);
+                let timeStr = time.toISOString().substr(11, 8);
                 let $clock = $div.find('.idleclock h3');
                 if ($clock.text() !== timeStr) $clock.text(timeStr);
             }
         }
     });
-    
+
     ws.on('ping', async (ping) => {
         ws.hasConnection = true;
         let timeStr = '';
@@ -118,28 +114,60 @@ for (let i = 0; i < wsInactive.length; i++) {
             }
             timeStr += ')';
         }
-        showError($div, chart.chart.timeStampStr() + ': Connected' + timeStr);
+        showError($div, chart.chart.timeStr() + ': Connected' + timeStr);
         wsStartTime[i] = Date.now();
         wsRetries[i] = 0;
     });
-    ws.on('closed', async () => {       
+
+    ws.on('closed', async (reason) => {
+        let hasConnection = ws.hasConnection;
+        if (hasConnection) {
+            let timeStr = '';
+            if (wsStartTime[i]) {
+                timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + ' later)';
+                wsStartTime[i] = Date.now();
+            }
+            showError($div, chart.chart.timeStr() + ': Closed ' + reason + ' ' + timeStr);
+            ws.hasConnection = false;
+        }
+
+
+
+
         let downtime = Date.now() - wsStartTime[i];
         let pause;
-        if (downtime < 60*1000) pause = 100;
-        else pause = 15*1000;
+        if (downtime < 5 * 1000) pause = 100;
+        else if (downtime < 60 * 1000) pause = 1 * 1000;
+        else pause = 15 * 1000;
 
         wsRetries[i]++;
-        console.log((new Date()).toISOString() + ': WS #'+i+': Retry: '+wsRetries[i] + ' pausing ' + pause);
+        console.log((new Date()).toISOString() + ': WS #' + i + ': Retry: ' + wsRetries[i] + ' pausing ' + pause);
         await QlikWSTester.sleep(pause);
 
-        await ws.open();
-        await ws.ping();
+        let isOpen = false;
+        try {
+            await ws.open();
+            isOpen = true;
+        } catch (err) {
+            if (hasConnection) {
+                if (err && err.loginUri) {
+                    showError($div, chart.chart.timeStr() + ': Please <a target="_bank" href="' + err.loginUri + '">login</a>');
+                } else {
+                    showError($div, chart.chart.timeStr() + ': Error: ' + (typeof err === 'string' ? err : JSON.stringify(err)));
+                }
+            }
+        }
+        if (isOpen) {
+            await ws.ping();
+        } else {
+            ws.close();
+        }
     });
 }
 
 function showError($element, err) {
     let msg = (typeof err === 'string') ? err : (err.message) ? err.message : JSON.stringify(err);
-    $element.append('<div>'+msg+'</div>')
+    $element.append('<div>' + msg + '</div>')
 }
 
 wsA.on('open', async () => {
@@ -151,14 +179,14 @@ wsA.on('open', async () => {
         //console.log('Tick ping: ', responseTime);
         chartA.addData("", responseTime);
     }
-    
+
 });
 
 
 
 
 
-var waitTime = 60/64/64*1000;
+var waitTime = 60 / 64 / 64 * 1000;
 // waitTime = 1000;
 // wsC.fakeTimeout = 3500;
 /*
@@ -226,12 +254,12 @@ displayConnected = function (msgType, url) {
 
 displayProductVersion = function (msgType, productVersion) {
     let elementId = 'ProductVersionWS';
-    displayStatus(elementId, msgType, 'Connected to Qlik Sense version: ' + productVersion );
+    displayStatus(elementId, msgType, 'Connected to Qlik Sense version: ' + productVersion);
 }
 
 displayApps = function (msgType, docList) {
     let elementId = 'DocListWS';
-    
+
     var nbrOfDoc = docList.length.toString();
 
     displayStatus(elementId, msgType, 'Application list of ' + nbrOfDoc + ' applications');
@@ -468,6 +496,33 @@ class ChartTimeSlice {
         }
         return str;
     }
+    dateStr(now) {
+        now = now || new Date();
+            
+        return now.toISOString().slice(0,10);
+    }
+    timeStr(now) {
+        now = now || new Date();
+    
+        var tzo = -now.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function(num, minLength) {
+                minLength = minLength || 2;
+                var norm = Math.floor(Math.abs(num)).toString();
+                var len = norm.length;
+                var str = '';
+                for (let i = len; i < minLength; i++) { str += '0'  }
+                str += norm;
+                return str;
+            };
+        return pad(now.getHours()) +
+            ':' + pad(now.getMinutes()) +
+            ':' + pad(now.getSeconds()) +
+            '.' + pad(now.getMilliseconds(), 3) +
+            ' ' + dif + pad(tzo / 60) +
+            ':' + pad(tzo % 60);
+    }
+    
     timeStampStr(now) {
         now = now || new Date();
     
@@ -643,7 +698,7 @@ class LineChart {
                 yAxes: [{
                     ticks: {
                         suggestedMin: 0,
-                        suggestedMax: 50
+                        suggestedMax: 30
                     }
                 }]
             }
@@ -702,11 +757,18 @@ module.exports = LineChart;
 const W3CWebSocket = require('websocket').w3cwebsocket;
 const ClassEvents = require('./event.js');
 
+const WebSocketConnection = {
+    CLOSE_REASON_NORMAL: 1000,
+    CLOSE_REASON_POLICY_VIOLATION: 1008,
+};
+
+
 class QlikWSTester extends ClassEvents {
     constructor(url, identity) {
         super();
         this.config = this.makeConfig(url, identity);
         this.ws = undefined;
+        this.reconnectCounter = 0;
         this.msgCounter = 1;
         this.msgBuffer = {};
         this.fakeTimeout = 0;
@@ -719,14 +781,19 @@ class QlikWSTester extends ClassEvents {
     }
 
     close() {
-        this.ws.close();
+		if (this.ws.ready <= 1)
+			this.ws.close(WebSocketConnection.CLOSE_REASON_NORMAL);
     }
     open() {
         var self = this;
-        self.debugMode && console.log('QWS: Connecting to ', this.config.url)
+        let url = this.config.url;
+        if (self.reconnectCounter) url += '-' + self.reconnectCounter;
+        self.reconnectCounter++;
+
+        self.debugMode && console.log('QWS: Connecting to ', url);
         return new Promise((resolve, reject) => {
             self.debugMode && console.log('QWS: Opening new websocket');
-            self.ws = new W3CWebSocket(self.config.url);
+            self.ws = new W3CWebSocket(url);
 
             self.ws.onerror = function (err) {
                 console.log('QWS: WS error at: ' + timeStampStr(new Date()) + ': ', err);
@@ -734,7 +801,7 @@ class QlikWSTester extends ClassEvents {
             };
             self.ws.onmessage = function (msg) {
                 self.debugMode && console.log('QWS: WS message at: ' + timeStampStr(new Date()) + ': ', msg.data);
-                self.messageLoop(msg.data)
+                self.parseMessage(msg.data, resolve, reject)
             };
             self.ws.onclose = function (e) {
                 self.debugMode && console.log('QWS: Session closed at: ' + timeStampStr(new Date()));
@@ -745,16 +812,12 @@ class QlikWSTester extends ClassEvents {
             self.ws.onopen = function () {
                 self.debugMode && console.log('QWS: Opened');
                 self.trigger('open');
-                resolve();
+                //resolve();
             };
-
-            // ,  (err) => {
-            //     reject(err);
-            // });
         });
     }
 
-    messageLoop(data) {
+    parseMessage(data, resolve, reject) {
         //
         // WebSocket message event loop 
         //
@@ -762,9 +825,11 @@ class QlikWSTester extends ClassEvents {
 
         let reply = JSON.parse(data);
         if (reply.method === 'OnAuthenticationInformation') {
-            if (reply.params && reply.params.mustAuthenticate) {
-                ws.close();
-                reject({ qlik: { message: 'Not authenticated' } });
+			if (reply.params && reply.params.loginUri) {
+				if (this.ws.ready == 1) {
+					this.ws.close(WebSocketConnection.CLOSE_REASON_NORMAL);
+				}
+				reject({ message: 'Needs authentication', loginUri: reply.params.loginUri } );
             }
         } else if (reply.method === 'OnNoEngineAvailable') {
             // Strange error message for saying:  wrong app id
@@ -774,6 +839,11 @@ class QlikWSTester extends ClassEvents {
             reject({ qlik: { message: 'No license, or too many parallel sessions' } });
         } else if (reply.method === 'OnConnected') {
             console.log('WS: CONNECTED!!!', reply.params.qSessionState, this.config.url);
+			resolve();
+        } else if (reply.method === 'OnSessionClosed') {
+            this.trigger('closed', 'OnSessionClosed');
+        } else if (reply.method === 'OnSessionTimedOut') {
+            this.trigger('closed', 'OnSessionTimedOut');
         } else {
             this.wsReply(reply);
         }
