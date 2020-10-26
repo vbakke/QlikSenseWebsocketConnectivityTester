@@ -1,7 +1,6 @@
 <html>
 
 <head>
-	<script src="https://rawgit.com/davidshimjs/qrcodejs/master/qrcode.min.js"></script>
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 
@@ -223,13 +222,18 @@
 
 
 		<div class="flex-container">
-			<div class="flex-grow1">
+			<div class="flex-growX">
 				<h2>Websocket with continous activity</h2>
-				<div class="chart-container testA" style="position: relative; height:100px; width:75%">
+				<div class="chart-container testA" style="position: relative; height:200px; width:400px">
 					<canvas id="Chart"></canvas>
 					<div style="font-size:smaller">Websocket ping response (ms)</div>
 				</div>
 			</div>
+			<div class="flex-grow2 testC">
+				<h2>Websocket with long idle times</h2>
+			</div>
+		</div>
+		<div class="flex-container">
 			<div class="flex-grow2 testInactive">
 				<h2>Websocket #1 with no activity</h2>
 				<div class="idleclock">

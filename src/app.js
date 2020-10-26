@@ -36,6 +36,7 @@ let $divsInactive = $('.testInactive');
 let identity = 'WS-' + Math.floor(Math.random() * 9000 + 1000);
 let ws = new QlikWSTester(url, identity);
 let wsA = new QlikWSTester(url, identity + '-A');
+let wsC = new QlikWSTester(url, identity + '-C');
 let wsInactive = [];
 for (let i = 0; i < $divsInactive.length; i++) {
     wsInactive.push(new QlikWSTester(url, identity + '-P-' + (1 + i)));
@@ -56,7 +57,8 @@ ws.once('open', async () => {
     ws.close();
 
     // Start the other websockets
-    //wsA.open();
+    wsA.open();
+    wsC.open();
     await QlikWSTester.sleep(1000);
     for (let i = 0; i < wsInactive.length; i++) {
         wsInactive[i].open();
@@ -184,7 +186,7 @@ wsA.on('open', async () => {
 var waitTime = 60 / 64 / 64 * 1000;
 // waitTime = 1000;
 // wsC.fakeTimeout = 3500;
-/*
+
 wsC.on('open',  async function (responseTime)  {
     let tooSmall = false;
     let newTime;
@@ -223,14 +225,14 @@ wsC.on('open',  async function (responseTime)  {
         }
     }
 });
-*/
+
 
 
 
 let chartA = new LineChart('#Chart');
 
 
-let $chartcontainer = $('#testC');
+let $chartcontainer = $('.testC');
 let chart = new ChartsTimeSlice($chartcontainer);
 chart.render();
 

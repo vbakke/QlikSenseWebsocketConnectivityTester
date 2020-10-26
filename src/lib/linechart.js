@@ -6,7 +6,7 @@ class LineChart {
 
         this.ctx = this.$container[0].getContext("2d");
         var options = {
-            responsive: true,
+            responsive: false,
             legend: {
                 display: false
             },

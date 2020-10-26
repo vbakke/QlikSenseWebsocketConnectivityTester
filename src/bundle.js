@@ -41,6 +41,7 @@ let $divsInactive = $('.testInactive');
 let identity = 'WS-' + Math.floor(Math.random() * 9000 + 1000);
 let ws = new QlikWSTester(url, identity);
 let wsA = new QlikWSTester(url, identity + '-A');
+let wsC = new QlikWSTester(url, identity + '-C');
 let wsInactive = [];
 for (let i = 0; i < $divsInactive.length; i++) {
     wsInactive.push(new QlikWSTester(url, identity + '-P-' + (1 + i)));
@@ -61,7 +62,8 @@ ws.once('open', async () => {
     ws.close();
 
     // Start the other websockets
-    //wsA.open();
+    wsA.open();
+    wsC.open();
     await QlikWSTester.sleep(1000);
     for (let i = 0; i < wsInactive.length; i++) {
         wsInactive[i].open();
@@ -189,7 +191,7 @@ wsA.on('open', async () => {
 var waitTime = 60 / 64 / 64 * 1000;
 // waitTime = 1000;
 // wsC.fakeTimeout = 3500;
-/*
+
 wsC.on('open',  async function (responseTime)  {
     let tooSmall = false;
     let newTime;
@@ -228,14 +230,14 @@ wsC.on('open',  async function (responseTime)  {
         }
     }
 });
-*/
+
 
 
 
 let chartA = new LineChart('#Chart');
 
 
-let $chartcontainer = $('#testC');
+let $chartcontainer = $('.testC');
 let chart = new ChartsTimeSlice($chartcontainer);
 chart.render();
 
@@ -690,7 +692,7 @@ class LineChart {
 
         this.ctx = this.$container[0].getContext("2d");
         var options = {
-            responsive: true,
+            responsive: false,
             legend: {
                 display: false
             },
@@ -757,10 +759,7 @@ module.exports = LineChart;
 const W3CWebSocket = require('websocket').w3cwebsocket;
 const ClassEvents = require('./event.js');
 
-const WebSocketConnection = {
-    CLOSE_REASON_NORMAL: 1000,
-    CLOSE_REASON_POLICY_VIOLATION: 1008,
-};
+const CLOSE_REASON_NORMAL = 1000;
 
 
 class QlikWSTester extends ClassEvents {
@@ -782,7 +781,7 @@ class QlikWSTester extends ClassEvents {
 
     close() {
 		if (this.ws.ready <= 1)
-			this.ws.close(WebSocketConnection.CLOSE_REASON_NORMAL);
+			this.ws.close(CLOSE_REASON_NORMAL);
     }
     open() {
         var self = this;
@@ -827,7 +826,7 @@ class QlikWSTester extends ClassEvents {
         if (reply.method === 'OnAuthenticationInformation') {
 			if (reply.params && reply.params.loginUri) {
 				if (this.ws.ready == 1) {
-					this.ws.close(WebSocketConnection.CLOSE_REASON_NORMAL);
+					this.ws.close(CLOSE_REASON_NORMAL);
 				}
 				reject({ message: 'Needs authentication', loginUri: reply.params.loginUri } );
             }
