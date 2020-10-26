@@ -28,9 +28,6 @@ if (host === 'localhost') {
 if (location.search.includes('?')) {
     if (location.search == '?localhost') url = 'http://localhost:4200' + path + '/';
     else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/';
-    else if (location.search == '?dfo') url = 'https://test.qlik.dfo.no/public/content/';
-    else if (location.search == '?vigo') url = 'https://qs.vigoiks.no/prod/content/';
-    else if (location.search == '?dummy') url = 'https://dummy-wss.vigoiks.no/prod/content/';
     else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/prod/content/';
 }
 
