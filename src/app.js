@@ -173,7 +173,7 @@ wsA.on('closed', (reason) => {
 wsA.on('open', async () => {
     showError($divA, 'Websocket connected: ' + chart.chart.timeStr())
     let responseTime = await wsA.ping();
-    chartA.addData("", responseTime);
+    // chartA.addData("", responseTime);
     $('button[data-player="A"][data-cmd="play"]').prop('disabled', true);
     $('button[data-player="A"][data-cmd="pause"]').prop('disabled', false);
 });
@@ -181,14 +181,13 @@ wsA.on('open', async () => {
 wsA.on('ping', async (time) => {
     chartA.addData("", time);
 
+    await QlikWSTester.sleep(2000);
     if (wsA.ws.readyState === WebSocket.OPEN) {
-        await QlikWSTester.sleep(2000);
-        responseTime = await wsA.ping();
+        let responseTime = await wsA.ping();
     }
 });
 
 $('button').on('click', (e) => {
-    console.log('e:', e);
     let $button = $(e.target);
     let player = $button.data('player');
     let cmd = $button.data('cmd');
