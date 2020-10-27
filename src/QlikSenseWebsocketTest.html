@@ -40,6 +40,19 @@
 			padding: 7px;
 		}
 
+		button {
+			border-radius: 4px;
+			border: solid 1px #cfd6db;
+			padding: 3px 13px;
+			margin: 0 7px 7px;
+			background-image: linear-gradient(45deg, #f3f4f5, #e7ecef);
+			box-shadow: 0px 1px 1px #808e99;
+		}
+
+		button[disabled] {
+			color: darkgray;
+		}
+
 		.flex-container {
 			display: flex;
 		}
@@ -53,7 +66,10 @@
 		}
 
 		.testB {
-			padding: 0 30px;
+			padding: 0 30px 15px;
+			margin-top: 10px;
+			border-top: solid 1px #dddddd;
+			background-color: #f6f6f6;
 		}
 
 		.credits {
@@ -93,7 +109,7 @@
 		}
 
 		.bar .element.ok {
-			background-color: #9fd392;
+			background-color: #c3e6b4;
 			/* background-color: #7bc868; */
 		}
 
@@ -222,18 +238,24 @@
 
 
 		<div class="flex-container">
-			<div class="flex-growX">
+			<div class="">
 				<h2>Websocket with continous activity</h2>
-				<div class="chart-container testA" style="position: relative; height:200px; width:400px">
-					<canvas id="Chart"></canvas>
-					<div style="font-size:smaller">Websocket ping response (ms)</div>
+				<div>
+					<button disabled data-player="A" data-cmd="play" class="glyphicon glyphicon-play">Play</button>
+					<button disabled data-player="A" data-cmd="pause" class="glyphicon glyphicon-pause">Pause</button>
+				</div>
+				<div class="testA">
+					<div class="chart-container" style="position: relative; height:170px; width:400px">
+						<canvas id="Chart"></canvas>
+						<div style="font-size:smaller">Websocket ping response (ms)</div>
+					</div>
 				</div>
 			</div>
 			<div class="flex-grow2 testC">
 				<h2>Websocket with long idle times</h2>
 			</div>
 		</div>
-		<div class="flex-container">
+		<div class="flex-container testB">
 			<div class="flex-grow2 testInactive">
 				<h2>Websocket #1 with no activity</h2>
 				<div class="idleclock">

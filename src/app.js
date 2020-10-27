@@ -20,13 +20,14 @@ var url = location.href;
 if (host === 'localhost') {
     host = 'qlik.server.com';  // DEBUG    
     path = '/public/content';  // DEBUG    
-    url = 'https://'+host+path+'/';
-    //url = 'http://localhost:8080'+path+'/';  // LOCAL DEBUG SERVER
+    url = 'https://' + host + path + '/';
+    url = 'http://localhost:4200' + path + '/';  // LOCAL DEBUG SERVER
 }
 
 if (location.search.includes('?')) {
     if (location.search == '?localhost') url = 'http://localhost:4200' + path + '/';
     else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/';
+    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/prod/content/';
 }
 
 let $divA = $('.testA');
@@ -66,10 +67,6 @@ ws.once('open', async () => {
     }
 });
 ws.open();
-
-wsA.on('closed', (reason) => {
-    showError($divA, 'Websocket closed: "' + reason + '" ' + chart.chart.timeStr())
-});
 
 let wsStartTime = [];
 let wsRetries = [];
@@ -167,19 +164,46 @@ function showError($element, err) {
     $element.append('<div>' + msg + '</div>')
 }
 
-wsA.on('open', async () => {
-    let responseTime = await wsA.ping();
-    //console.log('Tick ping: ', responseTime);
-    chartA.addData("", responseTime);
-    while (true) {
-        responseTime = await wsA.delayedPing(2000);
-        //console.log('Tick ping: ', responseTime);
-        chartA.addData("", responseTime);
-    }
-
+wsA.on('closed', (reason) => {
+    let reasonStr = (reason) ? '"' + reason + '"' : '';
+    showError($divA, 'Websocket closed: ' + reasonStr + ' ' + chart.chart.timeStr())
+    chartA.addData("", undefined);
 });
 
+wsA.on('open', async () => {
+    showError($divA, 'Websocket connected: ' + chart.chart.timeStr())
+    let responseTime = await wsA.ping();
+    chartA.addData("", responseTime);
+    $('button[data-player="A"][data-cmd="play"]').prop('disabled', true);
+    $('button[data-player="A"][data-cmd="pause"]').prop('disabled', false);
+});
+    
+wsA.on('ping', async (time) => {
+    chartA.addData("", time);
 
+    if (wsA.ws.readyState === WebSocket.OPEN) {
+        await QlikWSTester.sleep(2000);
+        responseTime = await wsA.ping();
+    }
+});
+
+$('button').on('click', (e) => {
+    console.log('e:', e);
+    let $button = $(e.target);
+    let player = $button.data('player');
+    let cmd = $button.data('cmd');
+
+    $('button[data-player="'+player+'"][data-cmd="'+cmd+'"]').prop('disabled', true);
+    $('button[data-player="'+player+'"][data-cmd!="'+cmd+'"]').prop('disabled', false);
+
+    let ws = (player === 'A') ? wsA : wsC;
+
+    if (cmd === 'play') {
+        ws.open();
+    } else {
+        ws.close();
+    }
+});
 
 
 

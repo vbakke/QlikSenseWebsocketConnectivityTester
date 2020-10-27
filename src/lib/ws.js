@@ -22,7 +22,7 @@ class QlikWSTester extends ClassEvents {
     }
 
     close() {
-		if (this.ws.ready <= 1)
+		if (this.ws.readyState <= WebSocket.OPEN)
 			this.ws.close(CLOSE_REASON_NORMAL);
     }
     open() {
@@ -183,8 +183,11 @@ class QlikWSTester extends ClassEvents {
         } else {
             // Send ping
             //try catch if err.message === 'Socket closed', include sleep time
-            let timed = await this.ping();
-            return timed;
+            if (this.ws.readyState <= WebSocket.OPEN) {
+                return await this.ping();
+            } else {
+                return 0;
+            }
         }
     }
 
