@@ -8,12 +8,12 @@
   },
   "dependencies": {
     "browserify": "^16.5.2",
-    "chart.js": "^2.7.2",
-    "enigma.js": "^2.2.1",
-    "moment": "^2.19.3",
+    "chart.js": "^2.9.4",
+    "enigma.js": "^2.7.2",
+    "moment": "^2.29.1",
     "qrcode-js": "0.0.2",
     "qsocks": "^3.2.1",
-    "websocket": "^1.0.32"
+    "websocket": "^1.0.33"
   },
   "devDependencies": {},
   "scripts": {
@@ -22,12 +22,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flautrup/QlikSenseWebsocketConnectivityTester.git"
+    "url": "git+https://github.com/vbakke/QlikSenseWebsocketConnectivityTester.git"
   },
   "author": "Fredrik Lautrup",
+  "contributors": ["Vegard Bakke"],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/flautrup/QlikSenseWebsocketConnectivityTester/issues"
+    "url": "https://github.com/vbakke/QlikSenseWebsocketConnectivityTester/issues"
   },
-  "homepage": "https://github.com/flautrup/QlikSenseWebsocketConnectivityTester#readme"
+  "homepage": "https://github.com/vbakke/QlikSenseWebsocketConnectivityTester#readme"
 }
