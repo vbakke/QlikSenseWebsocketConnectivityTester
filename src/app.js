@@ -165,13 +165,13 @@ function showError($element, err) {
 }
 
 wsA.on('closed', (reason) => {
-    let reasonStr = (reason) ? '"' + reason + '"' : '';
-    showError($divA, 'Websocket closed: ' + reasonStr + ' ' + chart.chart.timeStr())
+    let reasonStr = (reason) ? ' Reason: "' + reason + '"' : '';
+    showError($divA, chart.chart.timeStr() + ': Websocket closed: ' + reasonStr )
     chartA.addData("", undefined);
 });
 
 wsA.on('open', async () => {
-    showError($divA, 'Websocket connected: ' + chart.chart.timeStr())
+    showError($divA, chart.chart.timeStr()+': Websocket connected')
     let responseTime = await wsA.ping();
     // chartA.addData("", responseTime);
     $('button[data-player="A"][data-cmd="play"]').prop('disabled', true);
