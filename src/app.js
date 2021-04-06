@@ -49,9 +49,11 @@ ws.on('error', (e, err) => {
 ws.once('open', async () => {
     displayConnected('OK', ws.ws.url);
 
+    displayProductVersion('INFO');
     let version = await ws.getProductVersion();
     displayProductVersion('OK', version);
 
+    displayApps('INFO');
     let apps = await ws.getApps();
     displayApps('OK', apps);
 
@@ -59,14 +61,20 @@ ws.once('open', async () => {
 
     // Start the other websockets
     wsA.open();
-    wsC.open();
-    await QlikWSTester.sleep(1000);
+    //wsC.open();
+    await QlikWSTester.sleep(500);
     for (let i = 0; i < wsInactive.length; i++) {
         wsInactive[i].open();
         await QlikWSTester.sleep(5000);
     }
 });
-ws.open();
+
+ws.open().catch(err => {
+	console.log(err);
+	var reason = (err && err.qlik && err.qlik.message) || (err && err.message) || JSON.stringify(err);
+	displayConnected('ERROR', ws.ws.url, reason);
+});
+
 
 let wsStartTime = [];
 let wsRetries = [];
@@ -263,12 +271,12 @@ chart.render();
 
 
 
-displayConnected = function (msgType, url) {
+displayConnected = function (msgType, url, err) {
     let elementId = 'ConnectedWS';
     if (msgType === 'OK')
         displayStatus(elementId, msgType, 'Connected to ' + url);
     else
-        displayStatus(elementId, msgType, 'Failed connecting to ' + url);
+        displayStatus(elementId, msgType, 'Failed connecting to ' + url, err);
 }
 
 
@@ -280,24 +288,30 @@ displayProductVersion = function (msgType, productVersion) {
 displayApps = function (msgType, docList) {
     let elementId = 'DocListWS';
 
-    var nbrOfDoc = docList.length.toString();
+    let msg = (docList) ?  ('You have access to ' + docList.length + ' applications') : 'Retrieving list of applications....';
 
-    displayStatus(elementId, msgType, 'Application list of ' + nbrOfDoc + ' applications');
+    displayStatus(elementId, msgType, msg);
 }
 
-displayStatus = function (docListElement, msgType, str) {
+displayStatus = function (docListElement, msgType, str, str2) {
+    if (str2) str = str + ': ' + str2;
+
     document.getElementById(docListElement).innerHTML = str;
-    document.getElementById(docListElement + "Div").classList.remove('alert-info');
-    document.getElementById(docListElement + "Icon").classList.remove('glyphicon-unchecked');
-    if (msgType === 'OK') {
-        document.getElementById(docListElement + "Div").classList.add('alert-success');
-        document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
-    } else if (msgType === 'ERROR') {
-        document.getElementById(docListElement + "Div").classList.add('alert-danger');
-        document.getElementById(docListElement + "Icon").classList.add('glyphicon-ban-circle');
+    if (msgType === 'INFO') {
+        document.getElementById(docListElement + "Div").classList.add('alert-info');
+        document.getElementById(docListElement + "Icon").classList.add('glyphicon-unchecked');
+    } else {
+        document.getElementById(docListElement + "Div").classList.remove('alert-info');
+        document.getElementById(docListElement + "Icon").classList.remove('glyphicon-unchecked');
+        if (msgType === 'OK') {
+            document.getElementById(docListElement + "Div").classList.add('alert-success');
+            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
+        } else if (msgType === 'ERROR') {
+            document.getElementById(docListElement + "Div").classList.add('alert-danger');
+            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ban-circle');
+        }
     }
 }
-
 
 
 
