@@ -35,9 +35,9 @@ let $divsInactive = $('.testInactive');
 
 
 let identity = 'WS-' + Math.floor(Math.random() * 9000 + 1000);
-let ws = new QlikWSTester(url, identity);
-let wsA = new QlikWSTester(url, identity + '-A');
-let wsC = new QlikWSTester(url, identity + '-C');
+let ws = new QlikWSTester(url, identity);         // Initial websocket
+let wsA = new QlikWSTester(url, identity + '-A'); // Active websocket
+let wsB = new QlikWSTester(url, identity + '-B'); // Binary search websocket. Leftover from 
 let wsInactive = [];
 for (let i = 0; i < $divsInactive.length; i++) {
     wsInactive.push(new QlikWSTester(url, identity + '-P-' + (1 + i)));
@@ -61,7 +61,7 @@ ws.once('open', async () => {
 
     // Start the other websockets
     wsA.open();
-    //wsC.open();
+    //wsB.open();
     await QlikWSTester.sleep(500);
     for (let i = 0; i < wsInactive.length; i++) {
         wsInactive[i].open();
@@ -136,10 +136,12 @@ for (let i = 0; i < wsInactive.length; i++) {
 
 
 
+        // Start retrying quickly, and less frequently as total downtime increases
         let downtime = Date.now() - wsStartTime[i];
         let pause;
-        if (downtime < 5 * 1000) pause = 100;
-        else if (downtime < 60 * 1000) pause = 1 * 1000;
+        if (downtime < 2 * 1000) pause = 100;
+        else if (downtime < 5 * 1000) pause = 1 * 1000;
+        else if (downtime < 20 * 1000) pause = 5 * 1000;
         else pause = 15 * 1000;
 
         wsRetries[i]++;
@@ -203,7 +205,7 @@ $('button').on('click', (e) => {
     $('button[data-player="'+player+'"][data-cmd="'+cmd+'"]').prop('disabled', true);
     $('button[data-player="'+player+'"][data-cmd!="'+cmd+'"]').prop('disabled', false);
 
-    let ws = (player === 'A') ? wsA : wsC;
+    let ws = (player === 'A') ? wsA : wsB;
 
     if (cmd === 'play') {
         ws.open();
@@ -216,9 +218,9 @@ $('button').on('click', (e) => {
 
 var waitTime = 60 / 64 / 64 * 1000;
 // waitTime = 1000;
-// wsC.fakeTimeout = 3500;
+// wsB.fakeTimeout = 3500;
 
-wsC.on('open',  async function (responseTime)  {
+wsB.on('open',  async function (responseTime)  {
     let tooSmall = false;
     let newTime;
     let i = 0;
@@ -226,7 +228,7 @@ wsC.on('open',  async function (responseTime)  {
     while (!found) {
         let status;
         try {
-            await wsC.delayedPing(waitTime);
+            await wsB.delayedPing(waitTime);
             status = 'ok';
         } catch (err) {
             status = 'error';

@@ -17,7 +17,25 @@
 
 	<style>
 		body {
-			margin: 0 10px;
+			margin: 0;
+		}
+		.page {
+			flex-direction: column;
+			display: flex;
+			height: 100%;
+		}
+		.content {
+			flex: 1 0 auto;
+		}
+		.content, .title {
+			padding: 0 10px;
+		}
+		.footer {
+			flex-shrink: 0;			
+			font-size: smaller;
+			margin-top: 50px;
+			padding: 15px;
+			background-color: #e6edf5;
 		}
 
 		h1 {
@@ -211,76 +229,87 @@
 </head>
 
 <body>
-	<div>
+	<div class="page">
 		<div>
-			<div style="float: left; margin: 20px 20px 20px 20px;">
-				<h1>Qlik Sense Websocket Connectivity Tester</h1>
-			</div>
-		</div>
-	</div>
-	<div style="clear: both">
-		<!--
-		<div id="AuthenticatedDiv" class="alert alert-danger" role="alert">
-			<span id="AuthenticatedIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-			<span id="Authenticated">Authentication</span>
-		</div>
-	-->
-		<div id="ConnectedWSDiv" class="alert alert-info" role="alert">
-			<span id="ConnectedWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
-			<span id="ConnectedWS">Connect secure websocket</span>
-		</div>
-		<div id="ProductVersionWSDiv" class="alert" role="alert">
-			<span id="ProductVersionWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
-			<span id="ProductVersionWS">Retrive product version through secure websocket</span>
-		</div>
-		<div id="DocListWSDiv" class="alert" role="alert">
-			<span id="DocListWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
-			<span id="DocListWS">Retrive application list through secure websocket</span>
-		</div>
-
-
-		<div class="flex-container">
-			<div class="">
-				<h2>Websocket with continous activity</h2>
-				<div>
-					<button disabled data-player="A" data-cmd="play"><span class="glyphicon glyphicon-play"> </span> Play </button>
-					<button disabled data-player="A" data-cmd="pause"><span class="glyphicon glyphicon-pause"> </span> Pause </button>
-				</div>
-				<div class="testA">
-					<div class="chart-container" style="position: relative; height:170px; width:400px">
-						<canvas id="Chart"></canvas>
-						<div style="font-size:smaller">Websocket ping response (ms)</div>
-					</div>
-				</div>
-			</div>
-			<!--div class="flex-grow2 testC">
-				<h2>Websocket with long idle times</h2>
-			</div-->
-			<div class="flex-container testB">
-				<div class="flex-grow2 testInactive">
-					<h2>Websocket #1 with no activity</h2>
-					<div class="idleclock">
-						<span>This websocket has been <b>idle</b> for:</span>
-						<h3>Not yet connected</h3>
-					</div>
-				</div>
-				<div class="flex-grow2 testInactive">
-					<h2>Websocket #2 with no activity</h2>
-					<div class="idleclock">
-						<span>This websocket has been <b>idle</b> for:</span>
-						<h3>Not yet connected</h3>
-					</div>
-				</div>
-				<div class="flex-grow2 testInactive">
-					<h2>Websocket #3 with no activity</h2>
-					<div class="idleclock">
-						<span>This websocket has been <b>idle</b> for:</span>
-						<h3>Not yet connected</h3>
-					</div>
+			<div>
+				<div class="title">
+					<h1>Qlik Sense Websocket Connectivity Tester</h1>
 				</div>
 			</div>
 		</div>
+		<div class="content">
+			<!--
+			<div id="AuthenticatedDiv" class="alert alert-danger" role="alert">
+				<span id="AuthenticatedIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+				<span id="Authenticated">Authentication</span>
+			</div>
+		-->
+			<div id="ConnectedWSDiv" class="alert alert-info" role="alert">
+				<span id="ConnectedWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+				<span id="ConnectedWS">Connect secure websocket</span>
+			</div>
+			<div id="ProductVersionWSDiv" class="alert" role="alert">
+				<span id="ProductVersionWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+				<span id="ProductVersionWS">Retrive product version through secure websocket</span>
+			</div>
+			<div id="DocListWSDiv" class="alert" role="alert">
+				<span id="DocListWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+				<span id="DocListWS">Retrive application list through secure websocket</span>
+			</div>
 
+
+			<div class="flex-container">
+				<div class="">
+					<h2>Websocket with continous activity</h2>
+					<div>
+						<button disabled data-player="A" data-cmd="play"><span class="glyphicon glyphicon-play"> </span> Play </button>
+						<button disabled data-player="A" data-cmd="pause"><span class="glyphicon glyphicon-pause"> </span> Pause </button>
+					</div>
+					<div class="testA">
+						<div class="chart-container" style="position: relative; height:170px; width:400px">
+							<canvas id="Chart"></canvas>
+							<div style="font-size:smaller">Websocket ping response (ms)</div>
+						</div>
+					</div>
+				</div>
+				<!--div class="flex-grow2 testC">
+					<h2>Websocket with long idle times</h2>
+				</div-->
+				<div class="flex-container testB">
+					<div class="flex-grow2 testInactive">
+						<h2>Websocket #1 with no activity</h2>
+						<div class="idleclock">
+							<span>This websocket has been <b>idle</b> for:</span>
+							<h3>Not yet connected</h3>
+						</div>
+					</div>
+					<div class="flex-grow2 testInactive">
+						<h2>Websocket #2 with no activity</h2>
+						<div class="idleclock">
+							<span>This websocket has been <b>idle</b> for:</span>
+							<h3>Not yet connected</h3>
+						</div>
+					</div>
+					<div class="flex-grow2 testInactive">
+						<h2>Websocket #3 with no activity</h2>
+						<div class="idleclock">
+							<span>This websocket has been <b>idle</b> for:</span>
+							<h3>Not yet connected</h3>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div class="footer">
+			<p>
+				Cannot get a connection? What happens if you try: <a target="_blank" href="https://websocketstest.com/">https://websocketstest.com/</a>? Do you get a successful websocket connection there?
+			</p>
+			<p>
+				Downloaded from <a target="_blank" href="https://github.com/vbakke/QlikSenseWebsocketConnectivityTester">https://github.com/vbakke/QlikSenseWebsocketConnectivityTester</a><br/>
+				Based on: https://github.com/flautrup/QlikSenseWebsocketConnectivityTester
+			</p>
+		</div>
 	</div>
 </body>
 
