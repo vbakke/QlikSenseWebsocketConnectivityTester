@@ -36,10 +36,21 @@ It might not be needed anymore.
   * E.g. https://qlik.company.com/prefix/content/WebSocketTester/QlikSenseWebsocketTest.html
 
 ## Development
-Use `src/QlikSenseWebsocketTest.html` when developing and testing locally. 
-Run `browserify app.js -o bundle.js` in the `src` folder to complie the JS files into `bundle.js`.
+**NB!** Edit the subfolder `src/QlikSenseWebsocketTest.html` when developing and testing locally. 
+Not the main html file. You risk losing these changes.
 
-To build a release version:
+### Build 
+Run`npm run build` to build the bundle.js file.
+
+This executes `browserify app.js -o bundle.js` in the `src` folder to complie the JS files into `bundle.js`.
+
+
+
+
+### Distribution version
+To build a release version: Run `npm run dist`.
+
+This joins the .html and the bundle.js file in one by:
 * Copy `src/QlikSenseWebsocketTest.html` to `./QlikSenseWebsocketTest.html`
 * Replace `<script src="bundle.js"></script>` with 
   
@@ -55,6 +66,8 @@ In `app.js` you can change `if (host === 'localhost') {...}` to by specifying a 
 Or you may use the dummy Websocket Test Server in `./src/wstestserver`, using `node src-testserver\ws-testserver.js`
 
 ## This fork
-I have ripped out the enigma.js and replaced it with a bare bone W3CWebSocket to be able to catch terminations.
+I have ripped out the enigma.js and replaced it with a bare bone W3CWebSocket to be able to catch improper terminations.
+
+Unexcpected terminations are normally the reason for running this tool. :)
 
 

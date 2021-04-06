@@ -18,14 +18,18 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify app.js -o bundle.js"
+    "build": "browserify app.js -o bundle.js",
+    "dist": "npm run build && findstr /RV \"<script.src=.*bundle </html>\" QlikSenseWebsocketTest.html > q.html && echo ^<script^> >> q.html && type bundle.js >> q.html && echo ^</script^>^</html^> >> q.html && npm run dist:complete",
+    "dist:complete": "xcopy /Y q.html ..\\QlikSenseWebsocketTest.html && del q.html"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vbakke/QlikSenseWebsocketConnectivityTester.git"
   },
   "author": "Fredrik Lautrup",
-  "contributors": ["Vegard Bakke"],
+  "contributors": [
+    "Vegard Bakke"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/vbakke/QlikSenseWebsocketConnectivityTester/issues"
