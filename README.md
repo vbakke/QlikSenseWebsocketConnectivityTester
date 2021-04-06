@@ -65,11 +65,14 @@ Hopefully not needed anymore.
 
 
 # Installation:
+Just like the original:  https://community.qlik.com/t5/Knowledge-Base/Qlik-Sense-Websocket-Connectivity-Tester/ta-p/1716909
+
+
 * Download from https://github.com/vbakke/QlikSenseWebsocketConnectivityTester
 * Unzip
 * In the QMC create a Content library
 * Set the security rule correctly for the intended audience
-  * (Set rule appropriately, possibly `(user.isAnonymous())` for all users, or potentiall `true` to also include anonymous users.)
+  * (Set rule appropriately, possibly `(!user.isAnonymous())` for all users, or potentiall `true` to also include anonymous users.)
 * Upload `./QlikSenseWebsocketTest.html` file to the content library
 * Under `Contents` in your library, see the `URL path` column for the your path to the testing file
   * E.g. https://qlik.company.com/prefix/content/WebSocketTester/QlikSenseWebsocketTest.html
