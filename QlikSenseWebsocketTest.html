@@ -74,6 +74,10 @@
 
 		.flex-container {
 			display: flex;
+			width: 100%;
+		}
+		.flex-down {
+			flex-direction: column;
 		}
 
 		.flex-grow1 {
@@ -89,7 +93,6 @@
 			margin-top: 10px;
 			border-top: solid 1px #dddddd;
 			background-color: #f6f6f6;
-			width: 100%;
 		}
 
 		.credits {
@@ -275,27 +278,32 @@
 				<!--div class="flex-grow2 testC">
 					<h2>Websocket with long idle times</h2>
 				</div-->
-				<div class="flex-container testB">
-					<div class="flex-grow2 testInactive">
-						<h2>Websocket #1 with no activity</h2>
-						<div class="idleclock">
-							<span>This websocket has been <b>idle</b> for:</span>
-							<h3>Not yet connected</h3>
+				<div class="flex-container flex-down">
+					<div class="flex-container testB">
+						<div class="flex-grow2 testInactive">
+							<h2>Websocket #1 with no activity</h2>
+							<div class="idleclock">
+								<span>This websocket has been <b>idle</b> for:</span>
+								<h3>Not yet connected</h3>
+							</div>
+						</div>
+						<div class="flex-grow2 testInactive">
+							<h2>Websocket #2 with no activity</h2>
+							<div class="idleclock">
+								<span>This websocket has been <b>idle</b> for:</span>
+								<h3>Not yet connected</h3>
+							</div>
+						</div>
+						<div class="flex-grow2 testInactive">
+							<h2>Websocket #3 with no activity</h2>
+							<div class="idleclock">
+								<span>This websocket has been <b>idle</b> for:</span>
+								<h3>Not yet connected</h3>
+							</div>
 						</div>
 					</div>
-					<div class="flex-grow2 testInactive">
-						<h2>Websocket #2 with no activity</h2>
-						<div class="idleclock">
-							<span>This websocket has been <b>idle</b> for:</span>
-							<h3>Not yet connected</h3>
-						</div>
-					</div>
-					<div class="flex-grow2 testInactive">
-						<h2>Websocket #3 with no activity</h2>
-						<div class="idleclock">
-							<span>This websocket has been <b>idle</b> for:</span>
-							<h3>Not yet connected</h3>
-						</div>
+					<div class="footer">
+						Do the three <i>Inactive websockets</i> above start 5 seconds apart. Do they all terminate? In a fixed pattern? Or does it appear to be random? 
 					</div>
 				</div>
 			</div>
