@@ -447,7 +447,8 @@ for (let i = 0; i < wsInactive.length; i++) {
                 timeStr = ' (' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + ' later)';
                 wsStartTime[i] = Date.now();
             }
-            showError($div, chart.chart.timeStr() + ': Closed ' + reason + ' ' + timeStr);
+            reason = (reason) ? '. Reason: ' + JSON.stringify(reason) : '';
+            showError($div, chart.chart.timeStr() + ': Closed' + reason + ' ' + timeStr);
             ws.hasConnection = false;
         }
 
@@ -493,8 +494,8 @@ function showError($element, err) {
 }
 
 wsA.on('closed', (reason) => {
-    let reasonStr = (reason) ? ' Reason: "' + reason + '"' : '';
-    showError($divA, chart.chart.timeStr() + ': Websocket closed: ' + reasonStr )
+    let reasonStr = (reason) ? '. Reason: ' + JSON.stringify(reason)  : '';
+    showError($divA, chart.chart.timeStr() + ': Websocket closed' + reasonStr )
     chartA.addData("", undefined);
 });
 
