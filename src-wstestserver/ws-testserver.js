@@ -35,13 +35,13 @@ function runServer(port) {
         if (url.includes(IDENT_KEYWORD)) {
             identity = url.substr(url.indexOf(IDENT_KEYWORD) + IDENT_KEYWORD.length);
         }
-        console.log(identity +': ' + 'Client connected from: ' + ws._socket.remoteAddress + ':' + ws._socket.remotePort, req.url);
+        console.log(identity +': ' + 'Client connected from: ' + ws._socket.remoteAddress + ':' + ws._socket.remotePort + ' ' + req.url);
 
 
         ws.on('message', function incoming(message) {
             let reply = buildReply(message);
             ws.send(reply);
-            console.log(identity+':', message,'->', reply);
+            console.log(identity+': ' +  message + ' -> ' + reply);
         });
 
         ws.on('close', function incoming(closemsg) {
