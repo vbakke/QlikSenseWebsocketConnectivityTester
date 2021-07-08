@@ -335,27 +335,27 @@ const LineChart = require('./lib/linechart.js');
 const QlikWSTester = require('./lib/ws.js');
 
 
-//Setup
-var xrfkey = "0123456789abcdef";
-var hasFocus = true;
-var protocol = location.protocol;
+// Setup
 var host = location.hostname;
 var path = location.pathname;
 var url = location.href;
 
-if (host === 'localhost') {
-    host = 'qlik.server.com';  // DEBUG    
-    path = '/public/content';  // DEBUG    
-    url = 'https://' + host + path + '/';
-    url = 'http://localhost:4200' + path + '/';  // LOCAL DEBUG SERVER
+// Customize your own test qlik environment, when running this file from localhost
+if (host === "" || host === 'localhost') {
+    url = 'https://qlik.server.com/public/content/';  // DEBUG    
+    // url = 'https://showcase3.qlik.com/content/';  // DEBUG    
+    // url = 'http://localhost:4200/vproxy/content/';  // LOCAL WS TEST SERVER
 }
 
+// Customize your own test environment, controlled by query strings
 if (location.search.includes('?')) {
-    if (location.search == '?localhost') url = 'http://localhost:4200' + path + '/';
-    else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/';
-    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/prod/content/';
+    if (location.search == '?localhost') url = 'http://localhost:4200/vproxy/content/';
+    else if (location.search == '?testserver') url = 'https://test.server.com/vpoxy/content/';
+    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/vproxy/content/';
 }
 
+
+// Initialize
 let $divA = $('.testA');
 let $divsInactive = $('.testInactive');
 
@@ -1185,7 +1185,7 @@ class QlikWSTester extends ClassEvents {
 
         let reply = JSON.parse(data);
         if (reply.method === 'OnAuthenticationInformation') {
-			if (reply.params && reply.params.loginUri) {
+			if (reply.params && reply.params.mustAuthenticate) {
 				if (this.ws.ready == 1) {
 					this.ws.close(CLOSE_REASON_NORMAL);
 				}
@@ -23267,12 +23267,16 @@ module.exports = (function () {
 
 },{}],10:[function(require,module,exports){
 var _globalThis;
-try {
-	_globalThis = require('es5-ext/global');
-} catch (error) {
-} finally {
-	if (!_globalThis && typeof window !== 'undefined') { _globalThis = window; }
-	if (!_globalThis) { throw new Error('Could not determine global this'); }
+if (typeof globalThis === 'object') {
+	_globalThis = globalThis;
+} else {
+	try {
+		_globalThis = require('es5-ext/global');
+	} catch (error) {
+	} finally {
+		if (!_globalThis && typeof window !== 'undefined') { _globalThis = window; }
+		if (!_globalThis) { throw new Error('Could not determine global this'); }
+	}
 }
 
 var NativeWebSocket = _globalThis.WebSocket || _globalThis.MozWebSocket;
@@ -23322,29 +23326,28 @@ module.exports = require('../package.json').version;
 
 },{"../package.json":12}],12:[function(require,module,exports){
 module.exports={
-  "_from": "websocket@1.0.33",
-  "_id": "websocket@1.0.33",
+  "_from": "websocket@^1.0.34",
+  "_id": "websocket@1.0.34",
   "_inBundle": false,
-  "_integrity": "sha512-XwNqM2rN5eh3G2CUQE3OHZj+0xfdH42+OFK6LdC2yqiC0YU8e5UK0nYre220T0IyyN031V/XOvtHvXozvJYFWA==",
+  "_integrity": "sha512-PRDso2sGwF6kM75QykIesBijKSVceR6jL2G8NGYyq2XrItNC2P5/qL5XeR056GhA+Ly7JMFvJb9I312mJfmqnQ==",
   "_location": "/websocket",
   "_phantomChildren": {},
   "_requested": {
-    "type": "version",
+    "type": "range",
     "registry": true,
-    "raw": "websocket@1.0.33",
+    "raw": "websocket@^1.0.34",
     "name": "websocket",
     "escapedName": "websocket",
-    "rawSpec": "1.0.33",
+    "rawSpec": "^1.0.34",
     "saveSpec": null,
-    "fetchSpec": "1.0.33"
+    "fetchSpec": "^1.0.34"
   },
   "_requiredBy": [
-    "#USER",
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.33.tgz",
-  "_shasum": "407f763fc58e74a3fa41ca3ae5d78d3f5e3b82a5",
-  "_spec": "websocket@1.0.33",
+  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.34.tgz",
+  "_shasum": "2bdc2602c08bf2c82253b730655c0ef7dcab3111",
+  "_spec": "websocket@^1.0.34",
   "_where": "C:\\Users\\Vegard\\Documents\\src\\GIT-ReadOnly\\QlikSenseWebsocketConnectivityTester\\src",
   "author": {
     "name": "Brian McKelvey",
@@ -23414,7 +23417,7 @@ module.exports={
     "gulp": "gulp",
     "test": "tape test/unit/*.js"
   },
-  "version": "1.0.33"
+  "version": "1.0.34"
 }
 
 },{}]},{},[1]);

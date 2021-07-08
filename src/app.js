@@ -9,27 +9,27 @@ const LineChart = require('./lib/linechart.js');
 const QlikWSTester = require('./lib/ws.js');
 
 
-//Setup
-var xrfkey = "0123456789abcdef";
-var hasFocus = true;
-var protocol = location.protocol;
+// Setup
 var host = location.hostname;
 var path = location.pathname;
 var url = location.href;
 
-if (host === 'localhost') {
-    host = 'qlik.server.com';  // DEBUG    
-    path = '/public/content';  // DEBUG    
-    url = 'https://' + host + path + '/';
-    url = 'http://localhost:4200' + path + '/';  // LOCAL DEBUG SERVER
+// Customize your own test qlik environment, when running this file from localhost
+if (host === "" || host === 'localhost') {
+    url = 'https://qlik.server.com/public/content/';  // DEBUG    
+    // url = 'https://showcase3.qlik.com/content/';  // DEBUG    
+    // url = 'http://localhost:4200/vproxy/content/';  // LOCAL WS TEST SERVER
 }
 
+// Customize your own test environment, controlled by query strings
 if (location.search.includes('?')) {
-    if (location.search == '?localhost') url = 'http://localhost:4200' + path + '/';
-    else if (location.search == '?testserver') url = 'https://test.server.com/prefix/content/';
-    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/prod/content/';
+    if (location.search == '?localhost') url = 'http://localhost:4200/vproxy/content/';
+    else if (location.search == '?testserver') url = 'https://test.server.com/vpoxy/content/';
+    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/vproxy/content/';
 }
 
+
+// Initialize
 let $divA = $('.testA');
 let $divsInactive = $('.testInactive');
 

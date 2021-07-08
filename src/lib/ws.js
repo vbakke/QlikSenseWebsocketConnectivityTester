@@ -66,7 +66,7 @@ class QlikWSTester extends ClassEvents {
 
         let reply = JSON.parse(data);
         if (reply.method === 'OnAuthenticationInformation') {
-			if (reply.params && reply.params.loginUri) {
+			if (reply.params && reply.params.mustAuthenticate) {
 				if (this.ws.ready == 1) {
 					this.ws.close(CLOSE_REASON_NORMAL);
 				}

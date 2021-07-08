@@ -1,21 +1,21 @@
 {
   "name": "qliksensewebsocketconnectivitytester",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "## Description: This web page can be used to assess websocket connectivity to your Qlik Sense installation.",
   "main": "app.js",
   "directories": {
     "lib": "lib"
   },
   "dependencies": {
-    "browserify": "^16.5.2",
     "chart.js": "^2.9.4",
-    "enigma.js": "^2.7.2",
     "moment": "^2.29.1",
     "qrcode-js": "0.0.2",
     "qsocks": "^3.2.1",
-    "websocket": "^1.0.33"
+    "websocket": "^1.0.34"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "browserify": "^16.5.2"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "browserify app.js -o bundle.js",
