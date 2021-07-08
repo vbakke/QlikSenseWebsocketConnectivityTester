@@ -10,7 +10,6 @@
     "chart.js": "^2.9.4",
     "moment": "^2.29.1",
     "qrcode-js": "0.0.2",
-    "qsocks": "^3.2.1",
     "websocket": "^1.0.34"
   },
   "devDependencies": {
