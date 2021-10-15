@@ -1,6 +1,6 @@
 {
   "name": "qliksensewebsocketconnectivitytester",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "## Description: This web page can be used to assess websocket connectivity to your Qlik Sense installation.",
   "main": "app.js",
   "directories": {
@@ -9,7 +9,6 @@
   "dependencies": {
     "chart.js": "^2.9.4",
     "moment": "^2.29.1",
-    "qrcode-js": "0.0.2",
     "websocket": "^1.0.34"
   },
   "devDependencies": {

@@ -47,7 +47,12 @@ for (let i = 0; i < $divsInactive.length; i++) {
 ws.on('error', (e, err) => {
     displayConnected('ERROR', ws.ws.url);
 });
-ws.once('open', async () => {
+
+ws.once('open', () => {
+	displayConnected('INFO', ws.ws.url);
+});
+
+ws.open().then(async (msg) => {
     displayConnected('OK', ws.ws.url);
 
     displayProductVersion('INFO');
@@ -68,9 +73,9 @@ ws.once('open', async () => {
         wsInactive[i].open();
         await QlikWSTester.sleep(5000);
     }
-});
 
-ws.open().catch(err => {
+})
+.catch(err => {
 	console.log(err);
 	var reason = (err && err.qlik && err.qlik.message) || (err && err.message) || JSON.stringify(err);
 	displayConnected('ERROR', ws.ws.url, reason);
@@ -277,7 +282,9 @@ chart.render();
 
 displayConnected = function (msgType, url, err) {
     let elementId = 'ConnectedWS';
-    if (msgType === 'OK')
+    if (msgType === 'INFO')
+        displayStatus(elementId, msgType, 'Connecting to ' + url);
+    else if (msgType === 'OK')
         displayStatus(elementId, msgType, 'Connected to ' + url);
     else
         displayStatus(elementId, msgType, 'Failed connecting to ' + url, err);
@@ -303,16 +310,12 @@ displayStatus = function (docListElement, msgType, str, str2) {
     document.getElementById(docListElement).innerHTML = str;
     if (msgType === 'INFO') {
         document.getElementById(docListElement + "Div").classList.add('alert-info');
-        document.getElementById(docListElement + "Icon").classList.add('glyphicon-unchecked');
     } else {
         document.getElementById(docListElement + "Div").classList.remove('alert-info');
-        document.getElementById(docListElement + "Icon").classList.remove('glyphicon-unchecked');
         if (msgType === 'OK') {
             document.getElementById(docListElement + "Div").classList.add('alert-success');
-            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
         } else if (msgType === 'ERROR') {
             document.getElementById(docListElement + "Div").classList.add('alert-danger');
-            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ban-circle');
         }
     }
 }
@@ -854,7 +857,7 @@ class QlikWSTester extends ClassEvents {
 
     parseMessage(data, resolve, reject) {
         //
-        // WebSocket message event loop 
+        // WebSocket message event loop
         //
 
 
@@ -866,6 +869,8 @@ class QlikWSTester extends ClassEvents {
 				}
 				reject({ message: 'Needs authentication', loginUri: reply.params.loginUri } );
             }
+        } else if (reply.method === 'OnLicenseAccessDenied') {
+            reject({ qlik: { message: 'No license allocated' } });
         } else if (reply.method === 'OnNoEngineAvailable') {
             // Strange error message for saying:  wrong app id
             reject({ qlik: { message: 'Unknown app id' } });
@@ -23001,29 +23006,30 @@ module.exports = require('../package.json').version;
 
 },{"../package.json":12}],12:[function(require,module,exports){
 module.exports={
-  "_from": "websocket@^1.0.34",
+  "_from": "websocket@1.0.34",
   "_id": "websocket@1.0.34",
   "_inBundle": false,
   "_integrity": "sha512-PRDso2sGwF6kM75QykIesBijKSVceR6jL2G8NGYyq2XrItNC2P5/qL5XeR056GhA+Ly7JMFvJb9I312mJfmqnQ==",
   "_location": "/websocket",
   "_phantomChildren": {},
   "_requested": {
-    "type": "range",
+    "type": "version",
     "registry": true,
-    "raw": "websocket@^1.0.34",
+    "raw": "websocket@1.0.34",
     "name": "websocket",
     "escapedName": "websocket",
-    "rawSpec": "^1.0.34",
+    "rawSpec": "1.0.34",
     "saveSpec": null,
-    "fetchSpec": "^1.0.34"
+    "fetchSpec": "1.0.34"
   },
   "_requiredBy": [
+    "#USER",
     "/"
   ],
   "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.34.tgz",
   "_shasum": "2bdc2602c08bf2c82253b730655c0ef7dcab3111",
-  "_spec": "websocket@^1.0.34",
-  "_where": "C:\\Users\\Vegard\\Documents\\src\\GIT-ReadOnly\\QlikSenseWebsocketConnectivityTester\\src",
+  "_spec": "websocket@1.0.34",
+  "_where": "C:\\Users\\Vegard\\Documents\\src\\GIT\\QlikSense\\QlikSenseWebsocketConnectivityTester\\src",
   "author": {
     "name": "Brian McKelvey",
     "email": "theturtle32@gmail.com",

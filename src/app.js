@@ -46,7 +46,12 @@ for (let i = 0; i < $divsInactive.length; i++) {
 ws.on('error', (e, err) => {
     displayConnected('ERROR', ws.ws.url);
 });
-ws.once('open', async () => {
+
+ws.once('open', () => {
+	displayConnected('INFO', ws.ws.url);
+});
+
+ws.open().then(async (msg) => {
     displayConnected('OK', ws.ws.url);
 
     displayProductVersion('INFO');
@@ -67,9 +72,9 @@ ws.once('open', async () => {
         wsInactive[i].open();
         await QlikWSTester.sleep(5000);
     }
-});
 
-ws.open().catch(err => {
+})
+.catch(err => {
 	console.log(err);
 	var reason = (err && err.qlik && err.qlik.message) || (err && err.message) || JSON.stringify(err);
 	displayConnected('ERROR', ws.ws.url, reason);
@@ -276,7 +281,9 @@ chart.render();
 
 displayConnected = function (msgType, url, err) {
     let elementId = 'ConnectedWS';
-    if (msgType === 'OK')
+    if (msgType === 'INFO')
+        displayStatus(elementId, msgType, 'Connecting to ' + url);
+    else if (msgType === 'OK')
         displayStatus(elementId, msgType, 'Connected to ' + url);
     else
         displayStatus(elementId, msgType, 'Failed connecting to ' + url, err);
@@ -302,16 +309,12 @@ displayStatus = function (docListElement, msgType, str, str2) {
     document.getElementById(docListElement).innerHTML = str;
     if (msgType === 'INFO') {
         document.getElementById(docListElement + "Div").classList.add('alert-info');
-        document.getElementById(docListElement + "Icon").classList.add('glyphicon-unchecked');
     } else {
         document.getElementById(docListElement + "Div").classList.remove('alert-info');
-        document.getElementById(docListElement + "Icon").classList.remove('glyphicon-unchecked');
         if (msgType === 'OK') {
             document.getElementById(docListElement + "Div").classList.add('alert-success');
-            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ok-circle');
         } else if (msgType === 'ERROR') {
             document.getElementById(docListElement + "Div").classList.add('alert-danger');
-            document.getElementById(docListElement + "Icon").classList.add('glyphicon-ban-circle');
         }
     }
 }

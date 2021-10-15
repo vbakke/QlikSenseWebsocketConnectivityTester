@@ -60,7 +60,7 @@ class QlikWSTester extends ClassEvents {
 
     parseMessage(data, resolve, reject) {
         //
-        // WebSocket message event loop 
+        // WebSocket message event loop
         //
 
 
@@ -72,6 +72,8 @@ class QlikWSTester extends ClassEvents {
 				}
 				reject({ message: 'Needs authentication', loginUri: reply.params.loginUri } );
             }
+        } else if (reply.method === 'OnLicenseAccessDenied') {
+            reject({ qlik: { message: 'No license allocated' } });
         } else if (reply.method === 'OnNoEngineAvailable') {
             // Strange error message for saying:  wrong app id
             reject({ qlik: { message: 'Unknown app id' } });

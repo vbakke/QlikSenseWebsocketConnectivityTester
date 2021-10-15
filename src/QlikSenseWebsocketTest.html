@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 
 <head>
 	<!-- JQuery -->
@@ -58,6 +58,34 @@
 			padding: 7px;
 			background-color: #e8e8e8;
 		}
+
+		.alert .glyphicon:before {
+			content: '\e157';
+		}
+		.alert-info .glyphicon:before {
+			content: '\e031';
+		}
+		.alert-success .glyphicon:before {
+			content: '\e089';
+		}
+		.alert-danger .glyphicon:before {
+			content: '\e088';
+		}
+
+		.alert-info .glyphicon {
+			animation: spinner 2s infinite linear;
+		}
+		@keyframes spinner {
+			0% {
+				-webkit-transform: rotate(0deg);
+				transform: rotate(0deg);
+			}
+			100% {
+				-webkit-transform: rotate(360deg);
+				transform: rotate(360deg);
+			}
+		}
+
 
 		button {
 			border-radius: 4px;
@@ -243,20 +271,20 @@
 		<div class="content">
 			<!--
 			<div id="AuthenticatedDiv" class="alert alert-danger" role="alert">
-				<span id="AuthenticatedIcon" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+				<span id="AuthenticatedIcon" class="glyphicon" aria-hidden="true"></span>
 				<span id="Authenticated">Authentication</span>
 			</div>
 		-->
-			<div id="ConnectedWSDiv" class="alert alert-info" role="alert">
-				<span id="ConnectedWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
-				<span id="ConnectedWS">Connect secure websocket</span>
+			<div id="ConnectedWSDiv" class="alert" role="alert">
+				<span id="ConnectedWSIcon" class="glyphicon aria-hidden="true"></span>
+				<span id="ConnectedWS">Connect to websocket</span>
 			</div>
 			<div id="ProductVersionWSDiv" class="alert" role="alert">
-				<span id="ProductVersionWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+				<span id="ProductVersionWSIcon" class="glyphicon" aria-hidden="true"></span>
 				<span id="ProductVersionWS">Retrive product version through secure websocket</span>
 			</div>
 			<div id="DocListWSDiv" class="alert" role="alert">
-				<span id="DocListWSIcon" class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+				<span id="DocListWSIcon" class="glyphicon" aria-hidden="true"></span>
 				<span id="DocListWS">Retrive application list through secure websocket</span>
 			</div>
 
