@@ -201,8 +201,8 @@ class QlikWSTester extends ClassEvents {
 
     makeConfig(url, identity) {
         url = url.replace(/^http/, 'ws');
-        let pos = url.indexOf('/content/');
-        url = url.substr(0, pos) + '/app/engineData';
+        if (url.slice(-1) != '/') url += '/';
+        url = url + 'app/engineData';
         if (identity) url += '/identity/' + identity;
 
         let secure = url.startsWith('wss:');

@@ -4,7 +4,7 @@ This html file can be used to assess websocket connectivity to your Qlik Sense i
 ## Note:
 This fork is quite different from the original flautrup/QlikSenseWebsocketConnectivityTester.
 
-The purpose is to identify problems with websockets. Not just prove that it works. \
+The purpose is to identify problems with websockets. Not just prove that it works. 
 
 Typical problems are network boxes or reverse proxies terminating idle websockets,
 or a flaky network that causes the websockets to drop.
@@ -25,6 +25,7 @@ This web page creates several websockets.
 * **Inactive websockets** - Three *Inactive websockets*, that only fires an inital ping, then remains dormant. \
 The inactive websockets are started 5 seconds apart, which can help to deduct possible causes.
 
+![Screenshot](doc/img/example.png)
 
 # Network debugging
 This tool give you some information that might help you in your debugging:

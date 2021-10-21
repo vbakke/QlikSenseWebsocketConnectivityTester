@@ -17,16 +17,23 @@ var url = location.href;
 
 // Customize your own test qlik environment, when running this file from localhost
 if (host === "" || host === 'localhost') {
-    url = 'https://qlik.server.com/public/content/';  // DEBUG    
-    // url = 'https://showcase3.qlik.com/content/';  // DEBUG    
-    // url = 'http://localhost:4200/vproxy/content/';  // LOCAL WS TEST SERVER
+    // url = 'https://qlik.server.com/public/';  // DEBUG    
+    // url = 'https://showcase3.qlik.com/';  // DEBUG    
+    // url = 'http://localhost:4200/vproxy/';  // LOCAL WS TEST SERVER
 }
 
 // Customize your own test environment, controlled by query strings
 if (location.search.includes('?')) {
-    if (location.search == '?localhost') url = 'http://localhost:4200/vproxy/content/';
-    else if (location.search == '?testserver') url = 'https://test.server.com/vpoxy/content/';
-    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/vproxy/content/';
+    if (location.search == '?localhost') url = 'http://localhost:4200/vproxy/';
+    else if (location.search == '?testserver') url = 'https://test.server.com/vpoxy/';
+    else if (location.search == '?4200') url = 'https://' + location.hostname + ':4200/vproxy/';
+    else if (location.search == '?qlik') url = 'https://showcase3.qlik.com/';
+}
+
+// Make sure /content/ is present in the URL. It is being used when creating the we url.
+let contentPos = url.indexOf('/content/');
+if (contentPos > 0) {    
+    url = url.slice(0, contentPos);
 }
 
 
@@ -998,8 +1005,8 @@ class QlikWSTester extends ClassEvents {
 
     makeConfig(url, identity) {
         url = url.replace(/^http/, 'ws');
-        let pos = url.indexOf('/content/');
-        url = url.substr(0, pos) + '/app/engineData';
+        if (url.slice(-1) != '/') url += '/';
+        url = url + 'app/engineData';
         if (identity) url += '/identity/' + identity;
 
         let secure = url.startsWith('wss:');
