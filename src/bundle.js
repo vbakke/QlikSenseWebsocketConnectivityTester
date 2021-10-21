@@ -99,7 +99,10 @@ for (let i = 0; i < wsInactive.length; i++) {
     wsRetries[i] = 0;
 
     ws.on('error', (err) => {
-        showError($div, 'ERROR CAUGHT: ' + (typeof err === 'string' ? err : JSON.stringify(err)));
+        if (typeof err !== 'string') err = JSON.stringify(err);
+        if (err !== '{"isTrusted":true}') {  // Ignore errors when retrying opring a closed  websocket
+            showError($div, 'ERROR CAUGHT: ' + err);
+        }
     });
 
     ws.once('open', async () => {
