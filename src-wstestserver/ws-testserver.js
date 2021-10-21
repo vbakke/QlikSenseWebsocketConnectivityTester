@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 const WebSocket = require('ws');
 require('./console-logger').init('.');
 
 const port = tryParseInt(process.argv[2], 4200);
 const pingArg = tryParseInt(process.argv[3], 0);
+let useSecure = process.argv.includes('https');
 
 const htmlFile = locateFile('QlikSenseWebsocketTest.html');
 
@@ -19,10 +21,28 @@ const msgs = {
     Unknown: { jsonrpc: "2.0", id: -1, result: { msg: "Unknown command receieved" } },
 };
 
+let httpsOptions = {};
+const certPath = 'C:/ProgramData/Qlik/Sense/Repository/Exported Certificates/.Local Certificates';
+if (useSecure) {
+	if (fs.existsSync(certPath)) {
+		httpsOptions = {
+			cert: fs.readFileSync(certPath + '/server.pem'),
+			key: fs.readFileSync(certPath + '/server_key.pem'),
+		}		
+	} else {
+		console.log('');
+		console.log('ERROR: Cannot find server PEM certificates in:');
+		console.log('   ' + certPath);
+		console.log('Using HTTP instead of HTTPS');
+		console.log('');
+		useSecure = false;
+	}
+}
+
 //----------------------------
 // Start the Websocket server
 function runServer(port) {
-    const server = new http.createServer((req, res) => {
+    const server = createServer(useSecure, httpsOptions, (req, res) => {
         // Reply on normal http request, in case a load balancer is checking if the server is alive
         console.log(req.method + ' ', req.url);
         res.statusCode = 200;
@@ -33,6 +53,15 @@ function runServer(port) {
             res.end(html);
         } catch (err) {
             res.end('Websocket Server running');
+        }
+    })
+    .on('error',  function (err) {
+        if (err.errno === 'EADDRINUSE') {
+            console.log('ERROR: Cannot start server. Port ' + port + ' is already in use');
+            process.exit(10);
+        } else {
+            console.log('ERROR: Cannot start server:', err);
+            process.exit(1);
         }
     });
     const wss = new WebSocket.Server({ noServer: true, server: server });
@@ -139,5 +168,14 @@ function locateFile(filename) {
     console.log('Did not find the html file "'+filename+'"');
     return null;        
 }
+
+function createServer(useSecure, httpsOptions, handleRequest) {
+	if (useSecure) {
+		return https.createServer(httpsOptions, handleRequest);
+	} else {
+		return http.createServer(handleRequest);
+	}
+}
+
 
 runServer(port);
