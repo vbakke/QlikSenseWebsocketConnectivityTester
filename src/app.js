@@ -127,7 +127,7 @@ for (let i = 0; i < wsInactive.length; i++) {
         if (wsStartTime[i]) {
             timeStr = ' (after ' + chart.chart.timeSpanStr(Date.now() - wsStartTime[i]) + '';
             if (wsRetries[i]) {
-                timeStr += ' and ' + wsRetries[i] + ' retries';
+                timeStr += (wsRetries[i]===1) ? ' on first retry' : ' and ' + wsRetries[i] + ' retries';
             }
             timeStr += ')';
         }
