@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "chart.js": "^2.9.4",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "websocket": "^1.0.34"
   },
   "devDependencies": {
